@@ -1,0 +1,8 @@
+.gitignore
+.npmignore
+.jscsrc
+.git/
+gulfile.js
+spec/
+coverage/
+data/*.db
