@@ -5,4 +5,5 @@ ENV DEBIAN_FRONTEND noninteractive
 
 ADD ./ /app/
 WORKDIR /app
+VOLUME [ "/app/src/data" ]
 CMD [ "node", "/app/src/index.js" ]

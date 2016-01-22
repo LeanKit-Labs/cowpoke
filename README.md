@@ -77,7 +77,7 @@ __Response__
 
 ### New Image
 
-#### `POST /api/environment/:image`
+#### `PUT /api/environment/:image`
 
 __Response__
 ```json
