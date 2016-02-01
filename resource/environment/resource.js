@@ -12,8 +12,9 @@ function onSuccess( data ) {
 var _ = require( "lodash" );
 var when = require( "when" );
 var rancherFn = require( "../../src/rancher" );
+var format = require( "util" ).format;
 
-module.exports = function( host, environment ) {
+module.exports = function( host, environment, slack ) {
 	return {
 		name: "environment",
 		actions: {
@@ -41,6 +42,59 @@ module.exports = function( host, environment ) {
 						.then( onCreated, onFailure );
 				}
 			},
+			configure: {
+				url: "/:environment",
+				method: "PATCH",
+				handle: function( envelope ) {
+					var data = envelope.data;
+					var name = data.environment;
+
+					function onUpdated( env ) {
+						return {
+							status: 200,
+							data: env
+						};
+					}
+
+					function onError( err ) {
+						console.log( "Error", err );
+						return {
+							status: 500,
+							data: {
+								message: "Failed due to server error."
+							}
+						};
+					}
+
+					function onEnvironment( env ) {
+						try {
+							env.slackChannels = env.slackChannels || [];
+							_.each( data, function( item ) {
+								if( ( item.field === "slackChannels" || item.path === "/slackChannels" ) ) {
+									if( item.op === "add" ) {
+										env.slackChannels.push( item.value );
+									} else if( item.op === "remove" ) {
+										env.slackChannels = _.without( env.slackChannels, item.value );
+									}
+								}
+							} );
+							env.slackChannels = _.unique( env.slackChannels );
+							return environment.add( env )
+								.then( onUpdated.bind( null, env ), onError );
+						} catch ( e ) {
+							return {
+								status: 400,
+								data: {
+									message: e.stack
+								}
+							};
+						}
+					}
+
+					return environment.getByName( name )
+						.then( onEnvironment, onError );
+				}
+			},
 			upgrade: {
 				url: "/:image",
 				method: "PUT",
@@ -56,10 +110,25 @@ module.exports = function( host, environment ) {
 						};
 					}
 
+					function onChannels( services, channels ) {
+						if( channels && channels.length && services && services.length ) {
+							var names = _.pluck( _.flatten( services ), "name" );
+							names[ 0 ] = "\n - " + names[ 0 ];
+							var message = format( "Upgrading the following services to %s, hombre: %s",
+								image, names.join( "\n - " ) );
+							_.each( channels, function( channel ) {
+								slack.send( channel, message );
+							} );
+						}
+					}
+
 					function onEnvironmentsLoaded( environments ) {
 						var name = _.keys( environments )[ 0 ];
 						return environments[ name ].upgrade( image )
-							.then( null, onUpgradeError.bind( null, name ) );
+							.then(
+								onServices.bind( null, name ),
+								onUpgradeError.bind( null, name )
+							);
 					}
 
 					function onRancher( rancher ) {
@@ -109,6 +178,11 @@ module.exports = function( host, environment ) {
 								message: "Unable to get information for environment '" + name + "'"
 							}
 						};
+					}
+
+					function onServices( environmentName, services ) {
+						var channels = environment.getChannels( environmentName )
+							.then( onChannels.bind( null, services ) );
 					}
 
 					return environment.getAll()

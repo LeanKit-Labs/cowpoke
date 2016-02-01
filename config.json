@@ -2,19 +2,10 @@
 	"host": {
 		"port": 8800
 	},
-	"postgres": {
-		"host": "",
-		"port": 5432,
-		"user": "moo",
-		"password": "cow",
-		"database": "cowpoke"
-	},
 	"nedb": {
 		"path": "./data"
 	},
-	"admin": {
-		"user": "eastwood",
-		"password": "makemyday",
-		"token": "fistfullofburgers"
+	"slack": {
+		
 	}
 }

@@ -82,7 +82,7 @@ function wrap( db ) {
 }
 
 module.exports = function( fileName ) {
-	var dbPath = path.join( config.autohost.nedb.data, fileName );
+	var dbPath = path.join( config.nedb.path, fileName );
 	var store = new Datastore( { filename: dbPath, autoload: true } );
 	var api = wrap( store );
 	store.persistence.compactDatafile();
