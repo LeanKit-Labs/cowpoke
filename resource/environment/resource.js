@@ -13,6 +13,37 @@ var _ = require( "lodash" );
 var when = require( "when" );
 var rancherFn = require( "../../src/rancher" );
 var format = require( "util" ).format;
+var statusIntervals = {};
+var pendingUpgrade = {};
+
+function checkStatus( environment, slack, channels ) {
+	function onServiceList( services ) {
+		_.each( services, function( service ) {
+			if( pendingUpgrade[ service.id ] && service.state === "upgraded" ) {
+				var message = format( "The service %s in environment %s has upgraded successfully, amigo.",
+					service.name, environment.name );
+				_.each( channels, function( channel ) {
+					slack.send( channel, message );
+				} );
+				delete pendingUpgrade[ service.id ];
+			}
+		} );
+	}
+
+	environment.listServices()
+		.then( onServiceList.bind( null, slack, channels ) );
+}
+
+function createServiceChecks( environment, slack, services, channels ) {
+	_.each( services, function( service ) {
+		if( !statusIntervals[ service.environmentId ] ) {
+			statusIntervals = setInterval( checkStatus.bind( null, environment, slack, channels ), 5000 );
+		}
+		if( !pendingUpgrade[ service.id ] ) {
+			pendingUpgrade[ service.id ] = true;
+		}
+	} );
+}
 
 module.exports = function( host, environment, slack ) {
 	return {
@@ -110,7 +141,7 @@ module.exports = function( host, environment, slack ) {
 						};
 					}
 
-					function onChannels( services, channels ) {
+					function onChannels( environment, services, channels ) {
 						if( channels && channels.length && services && services.length ) {
 							var names = _.pluck( _.flatten( services ), "name" );
 							names[ 0 ] = "\n - " + names[ 0 ];
@@ -119,14 +150,16 @@ module.exports = function( host, environment, slack ) {
 							_.each( channels, function( channel ) {
 								slack.send( channel, message );
 							} );
+							createServiceChecks( environment, slack, services, channels );
 						}
 					}
 
 					function onEnvironmentsLoaded( environments ) {
 						var name = _.keys( environments )[ 0 ];
-						return environments[ name ].upgrade( image )
+						var environment = environments[ name ];
+						return environment.upgrade( image )
 							.then(
-								onServices.bind( null, name ),
+								onServices.bind( null, name, environment ),
 								onUpgradeError.bind( null, name )
 							);
 					}
@@ -180,9 +213,9 @@ module.exports = function( host, environment, slack ) {
 						};
 					}
 
-					function onServices( environmentName, services ) {
+					function onServices( environmentName, environment, services ) {
 						var channels = environment.getChannels( environmentName )
-							.then( onChannels.bind( null, services ) );
+							.then( onChannels.bind( null, environment, services ) );
 					}
 
 					return environment.getAll()

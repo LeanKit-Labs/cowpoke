@@ -9,7 +9,7 @@ function onError( err ) {
 }
 
 function onMessage( message ) {
-	console.log( "Got message: ", message );
+	console.log( "Got message: ", message.text );
 }
 
 function tell( slack, target, message ) {
@@ -24,12 +24,6 @@ function tell( slack, target, message ) {
 		dm.send( message );
 	}
 }
-
-// function send( slack, target, message ) {
-// 	console.log( "attempting to send '" + message + "' to '" + target + "'");
-// 	var channel = slack.getChannelByName( target );
-// 	channel.send( message );
-// }
 
 function send( slack, name, message ) {
 	var target = slack.getChannelGroupOrDMByName( name );
