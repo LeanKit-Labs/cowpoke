@@ -5,7 +5,7 @@ WORKDIR /src
 ADD . .
 
 # If you have native dependencies, you'll need extra tools
-RUN apk add --update make gcc g++ python git
+RUN apk add --update make gcc g++ python git bash
 RUN rm -rf ./node_modules
 RUN npm install
 RUN apk del make gcc g++ python && \

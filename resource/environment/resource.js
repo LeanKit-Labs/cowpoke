@@ -19,7 +19,7 @@ var pendingUpgrade = {};
 function checkStatus( environment, slack, channels ) {
 	function onServiceList( services ) {
 		_.each( services, function( service ) {
-			if( pendingUpgrade[ service.id ] && service.state === "upgraded" ) {
+			if ( pendingUpgrade[ service.id ] && service.state === "upgraded" ) {
 				var message = format( "The service %s in environment %s has upgraded successfully, amigo.",
 					service.name, environment.name );
 				_.each( channels, function( channel ) {
@@ -36,10 +36,10 @@ function checkStatus( environment, slack, channels ) {
 
 function createServiceChecks( environment, slack, services, channels ) {
 	_.each( services, function( service ) {
-		if( !statusIntervals[ service.environmentId ] ) {
+		if ( !statusIntervals[ service.environmentId ] ) {
 			statusIntervals = setInterval( checkStatus.bind( null, environment, slack, channels ), 5000 );
 		}
-		if( !pendingUpgrade[ service.id ] ) {
+		if ( !pendingUpgrade[ service.id ] ) {
 			pendingUpgrade[ service.id ] = true;
 		}
 	} );
@@ -101,10 +101,10 @@ module.exports = function( host, environment, slack ) {
 						try {
 							env.slackChannels = env.slackChannels || [];
 							_.each( data, function( item ) {
-								if( ( item.field === "slackChannels" || item.path === "/slackChannels" ) ) {
-									if( item.op === "add" ) {
+								if ( ( item.field === "slackChannels" || item.path === "/slackChannels" ) ) {
+									if ( item.op === "add" ) {
 										env.slackChannels.push( item.value );
-									} else if( item.op === "remove" ) {
+									} else if ( item.op === "remove" ) {
 										env.slackChannels = _.without( env.slackChannels, item.value );
 									}
 								}
@@ -142,7 +142,7 @@ module.exports = function( host, environment, slack ) {
 					}
 
 					function onChannels( environment, services, channels ) {
-						if( channels && channels.length && services && services.length ) {
+						if ( channels && channels.length && services && services.length ) {
 							var names = _.pluck( _.flatten( services ), "name" );
 							names[ 0 ] = "\n - " + names[ 0 ];
 							var message = format( "Upgrading the following services to %s, hombre: %s",

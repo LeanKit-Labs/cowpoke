@@ -123,13 +123,13 @@ function parseService( service, http, environment, stack ) {
 		droneImage: service.launchConfig.imageUuid.replace( /^docker[:]/, "" ),
 		buildInfo: util.getImageInfo( service.launchConfig.imageUuid )
 	};
-	if( definition.transitioning !== "no" ) {
+	if ( definition.transitioning !== "no" ) {
 		definition.transition = {
 			error: service.transitioning === "error",
 			status: service.transitionMessage,
 			progress: service.transitionProgress,
 			upgrade: service.upgrade
-		}
+		};
 	}
 	definition.upgrade = upgradeService.bind( null, http, service.actions.upgrade, definition, environment, stack );
 	return definition;

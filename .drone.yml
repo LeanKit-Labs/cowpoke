@@ -1,0 +1,20 @@
+debug: true
+build:
+  image: nodesource/jessie:5.7
+  commands:
+   - npm install
+   - npm test
+
+cache:
+  mount:
+    - node_modules
+    - .git
+
+publish:
+  docker:
+    username: $$DOCKER_USER
+    password: $$DOCKER_PASS
+    email: $$DOCKER_EMAIL
+    repo: leankit/cowpoke
+    when:
+      branch: poc
