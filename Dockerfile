@@ -3,6 +3,7 @@ MAINTAINER Alex Robson <asrobson@gmail.com>
 
 WORKDIR /src
 ADD . .
+ENV NODE_ENV=production
 
 # If you have native dependencies, you'll need extra tools
 RUN apk add --update make gcc g++ python git bash
