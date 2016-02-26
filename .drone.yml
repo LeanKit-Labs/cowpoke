@@ -2,6 +2,7 @@ debug: true
 build:
   image: nodesource/jessie:5.7
   commands:
+   - npm install gulp -g
    - npm install
    - npm test
 
