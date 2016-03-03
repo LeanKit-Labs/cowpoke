@@ -194,8 +194,6 @@ function configure( envelope ) {
 	var data = envelope.data;
 	var name = data.environment;
 
-    return environment.getByName( name ).then( onEnvironment, onError );
-
     return environment.getByName( name ).then( onEnvironment.bind(null, data), onError );
 }
 

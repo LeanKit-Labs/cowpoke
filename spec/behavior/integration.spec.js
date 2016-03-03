@@ -1,6 +1,6 @@
 //var test = proxyquire("./libToTest", {"./libToMock": function() {return "I was Mocked :)"}})
 var proxyquire = require("proxyquire").callThru();
-var when = require("when")
+var when = require("when");
 
 function upgradeMock(arg) {
     var promiseGen = when.defer();
