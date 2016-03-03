@@ -30,7 +30,6 @@ function checkStatus( env, slack, channels ) {
 function createServiceChecks( environment, slack, services, channels ) {
 	_.each( services, function( service ) {
 		if( !statusIntervals[ service.environmentId ] ) {
-            //console.log(statusIntervals);
 			statusIntervals = setInterval( checkStatus.bind( null, environment, slack, channels ), 5000 );
 		}
 		if( !pendingUpgrade[ service.id ] ) {
@@ -75,7 +74,7 @@ function onError( err ) {
 	};
 }
 
-function onEnvironment(image, env) {
+function onEnvironment(data, image, env) {
 	try {
 		env.slackChannels = env.slackChannels || [];
 		_.each( data, function( item ) {
@@ -193,7 +192,7 @@ function create( envelope ) {
 function configure( envelope ) {
 	var data = envelope.data;
 	var name = data.environment;
-    return environment.getByName( name ).then( onEnvironment, onError );
+    return environment.getByName( name ).then( onEnvironment.bind(null, data), onError );
 }
 
 function upgrade( envelope ) {
