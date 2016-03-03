@@ -142,5 +142,5 @@ var integration = proxyquire("../../resource/environment/integration.js", {"../.
 //console.log("running upgrade");
 function logResults(res) {
     console.log(JSON.stringify(res, null, 4));
-};
+}
 integration.upgrade({data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}}).then(logResults);
