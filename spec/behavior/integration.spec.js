@@ -37,11 +37,11 @@ function upgradeMock(arg) {
                 }
             }
         ]);
-	return promiseGen.promise
+	return promiseGen.promise;
 }
 
 function listEnvironmentsMock() {
-    var promiseGen = when.defer()
+    var promiseGen = when.defer();
     promiseGen.resolve({ 
 		Test: { 
    			id: 'l0l',
@@ -53,7 +53,7 @@ function listEnvironmentsMock() {
      		upgrade: upgradeMock
      	}
     });
-	return promiseGen.promise	
+	return promiseGen.promise;
 }
 
 function rancherMock(arg, arg2) {
@@ -62,11 +62,11 @@ function rancherMock(arg, arg2) {
     promisGenerator.resolve({
 		listEnvironments: listEnvironmentsMock
 	});
-	return promisGenerator.promise
+	return promisGenerator.promise;
 }
 
 function getAllEnvMock() {
-    var promisGen = when.defer()
+    var promisGen = when.defer();
     promisGen.resolve([{
         "name": "test",
         "baseUrl": "http://example.com",
@@ -75,7 +75,7 @@ function getAllEnvMock() {
         "key": "key",
         "secret": "secret"
     }]);
-    return promisGen.promise
+    return promisGen.promise;
 }
 
 function getChannelsMock() {
@@ -83,11 +83,11 @@ function getChannelsMock() {
     promisGen.resolve(
         ["TEST"]
     );
-    return promisGen.promise
+    return promisGen.promise;
 }
 
 function mockListServices() {
-    var promisGen = when.defer()
+    var promisGen = when.defer();
     promisGen.resolve(
         [
             {
@@ -123,18 +123,18 @@ function mockListServices() {
             }
         ]
     );
-    return promisGen.promise
+    return promisGen.promise;
 }
 
 var envMock = {
     getAll: getAllEnvMock,
     getChannels: getChannelsMock,
     listServices : mockListServices
-}
+};
 
 var slackMock = {
     send: function(channel) {/*console.log("Would send slack message to " + channel)*/}
-}
+};
 
 var integration = proxyquire("../../resource/environment/integration.js", {"../../src/rancher": rancherMock, "../../src/data/nedb/environment" : envMock, "../../src/slack" : slackMock });
 
@@ -142,5 +142,5 @@ var integration = proxyquire("../../resource/environment/integration.js", {"../.
 //console.log("running upgrade");
 function logResults(res) {
     console.log(JSON.stringify(res, null, 4));
-}
+};
 integration.upgrade({data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}}).then(logResults);
