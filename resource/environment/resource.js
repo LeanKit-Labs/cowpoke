@@ -27,7 +27,7 @@ module.exports = function( host, environment, slack ) {
 			upgrade: {
 				url: "/:image",
 				method: "PUT",
-				handle: integration.upgrade
+				handle: integration.upgrade.bind(null, slack)
 			}
 		}
 	};

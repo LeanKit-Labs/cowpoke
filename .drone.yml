@@ -1,6 +1,6 @@
 debug: true
 build:
-  image: nodesource/jessie:5.7
+  image: node:5
   environment:
   - NODE_ENV=dev
   commands:
