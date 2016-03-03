@@ -4,6 +4,40 @@ var when = require( "when" );
 var rancherFn = require( "../../src/rancher" );
 var format = require( "util" ).format;
 var environment = require( "../../src/data/nedb/environment" );
+var slack = require( "../../src/slack" );
+
+var statusIntervals = {};
+var pendingUpgrade = {};
+
+function onServiceList( env, channels, services ) {
+		_.each( services, function( service ) {
+			if( pendingUpgrade[ service.id ] && service.state === "upgraded" ) {
+				var message = format( "The service %s in environment %s has upgraded successfully, amigo.",
+					service.name, env.name );
+				_.each( channels, function( channel ) {
+					slack.send( channel, message );
+				} );
+				delete pendingUpgrade[ service.id ];
+			}
+		} );
+	}
+
+function checkStatus( env, slack, channels ) {
+	environment.listServices()
+		.then( onServiceList.bind( null, env, channels ) );
+}
+
+function createServiceChecks( environment, slack, services, channels ) {
+	_.each( services, function( service ) {
+		if( !statusIntervals[ service.environmentId ] ) {
+            //console.log(statusIntervals);
+			statusIntervals = setInterval( checkStatus.bind( null, environment, slack, channels ), 5000 );
+		}
+		if( !pendingUpgrade[ service.id ] ) {
+			pendingUpgrade[ service.id ] = true;
+		}
+	} );
+    }
 
 function onFailure( err ) {
 	return { data: {
@@ -16,7 +50,7 @@ function onSuccess( data ) {
 }
 
 function onUpdated( env ) {
-	return {
+    return {
 		status: 200,
 		data: env
 	};
@@ -74,7 +108,7 @@ function onUpgradeError( name, error ) {
 	};
 }
 
-function onChannels( environment, services, channels ) {
+function onChannels( image, environment, services, channels ) {
 	if( channels && channels.length && services && services.length ) {
 		var names = _.pluck( _.flatten( services ), "name" );
 		names[ 0 ] = "\n - " + names[ 0 ];
@@ -89,14 +123,12 @@ function onChannels( environment, services, channels ) {
 
 function onEnvironmentsLoaded( image, environments ) {
 	var name = _.keys( environments )[ 0 ];
-	var environment = environments[ name ];
-    var test = environment.upgrade( image ).then(onServices.bind( null, name, environment ), onUpgradeError.bind( null, name ));
-	return test;
+	var env = environments[ name ];
+    return env.upgrade( image ).then(onServices.bind( null, image, name, environment ), onUpgradeError.bind( null, name ));
 }
 
 function onRancher(image, rancher ) {
-    var test = rancher.listEnvironments().then( onEnvironmentsLoaded.bind(null, image), onConnectionError );
-	return test;
+    return rancher.listEnvironments().then( onEnvironmentsLoaded.bind(null, image), onConnectionError );
 }
 
 function onConnectionError( error ) {
@@ -143,8 +175,9 @@ function onReadError( error ) {
 	};
 }
 
-function onServices( environmentName, env, services ) {
-	var channels = environment.getChannels( environmentName ).then( onChannels.bind( null, env, services ) );
+function onServices( image, environmentName, env, services ) {
+	var channels = environment.getChannels( environmentName ).then( onChannels.bind( null, image, env, services ) );
+    return services;
 }
 
 
@@ -160,7 +193,7 @@ function create( envelope ) {
 function configure( envelope ) {
 	var data = envelope.data;
 	var name = data.environment;
-		return environment.getByName( name ).then( onEnvironment, onError );
+    return environment.getByName( name ).then( onEnvironment, onError );
 }
 
 function upgrade( envelope ) {

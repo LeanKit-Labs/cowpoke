@@ -1,18 +1,10 @@
 
-function onFailure( err ) {
-	return { data: {
-		message: err.message
-	}, status: 500 };
-}
-
-function onSuccess( data ) {
-	return { data: data };
-}
-
+var integration = require("./integration");
 var _ = require( "lodash" );
 var when = require( "when" );
 var rancherFn = require( "../../src/rancher" );
 var format = require( "util" ).format;
+<<<<<<< f52d24cecf6cfb9339614d5b2b086c53fa6855cd
 var statusIntervals = {};
 var pendingUpgrade = {};
 
@@ -44,6 +36,8 @@ function createServiceChecks( environment, slack, services, channels ) {
 		}
 	} );
 }
+=======
+>>>>>>> Fixed PR
 
 module.exports = function( host, environment, slack ) {
 	return {
@@ -52,30 +46,17 @@ module.exports = function( host, environment, slack ) {
 			list: {
 				url: "/",
 				method: "GET",
-				handle: function() {
-					return environment.getAll()
-						.then( onSuccess, onFailure );
-				}
+				handle: integration.list
 			},
 			create: {
 				url: "/",
 				method: "POST",
-				handle: function( envelope ) {
-					var data = envelope.data;
-					function onCreated() {
-						return {
-							data: {
-								message: "Created"
-							}
-						};
-					}
-					return environment.add( data )
-						.then( onCreated, onFailure );
-				}
+				handle: integration.create
 			},
 			configure: {
 				url: "/:environment",
 				method: "PATCH",
+<<<<<<< f52d24cecf6cfb9339614d5b2b086c53fa6855cd
 				handle: function( envelope ) {
 					var data = envelope.data;
 					var name = data.environment;
@@ -125,10 +106,14 @@ module.exports = function( host, environment, slack ) {
 					return environment.getByName( name )
 						.then( onEnvironment, onError );
 				}
+=======
+				handle: integration.configure
+>>>>>>> Fixed PR
 			},
 			upgrade: {
 				url: "/:image",
 				method: "PUT",
+<<<<<<< f52d24cecf6cfb9339614d5b2b086c53fa6855cd
 				handle: function( envelope ) {
 					var image = envelope.data.image;
 
@@ -221,6 +206,9 @@ module.exports = function( host, environment, slack ) {
 					return environment.getAll()
 						.then( onEnvironments, onReadError );
 				}
+=======
+				handle: integration.upgrade
+>>>>>>> Fixed PR
 			}
 		}
 	};

@@ -1,140 +1,146 @@
-require( "../setup" );
+//var test = proxyquire("./libToTest", {"./libToMock": function() {return "I was Mocked :)"}})
+var proxyquire = require("proxyquire").callThru();
+var when = require("when")
 
-function testUpgrade() {
-
-var baseURL = "http://example.com";
-var nock = require( "nock" );
-var integration = require( "../../resource/environment/integration.js" );
-
-var rancherHost = nock( baseURL );
-
-rancherHost.get( "/v1" ).reply( 200, {
-    links: {
-        projects: baseURL + "/v1/projects"
-	}
-});
-rancherHost.get( "/v1/projects" ).reply( 200, {
-	data: [{
-	   id: "l0l",
-	   name: "Test",
-	   state: "active",
-	   links: {
-			environments: baseURL + "/v1/projects/l0l/environments",
-			containers: baseURL + "/v1/projects/l0l/containers",
-			services: baseURL + "/v1/projects/l0l/services"
-       }
-	}]
-});
-rancherHost.get( "/v1/projects/l0l/services" ).reply( 200, {
-    data: [
-	   {
-	       id: "svc0102",
-		   name: "Service 02",
-		   accountId: "l0l",
-		   environmentId: "s01",
-		   description: "A test service",
-		   state: "active",
-		   launchConfig: {
-		      imageUuid: "docker:arob/cowpoke:arobson_cowpoke_develop_0.1.0_1_abcdef"
-			},
-			actions: {
-				upgrade: baseURL + "/v1/projects/l0l/environments/s01/services/svc0102?action=upgrade"
-			}
-		},
-		{
-			id: "svc0103",
-			name: "Service 03",
-			accountId: "l0l",
-			environmentId: "s01",
-			description: "A test service",
-			state: "active",
-			launchConfig: {
-				imageUuid: "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef"
-			},
-			actions: {
-				upgrade: baseURL + "/v1/projects/l0l/environments/s01/services/svc0103?action=upgrade"
-			}
-		}
-	]
-} );
-                
-/*rancherHost.post( "/v1/projects/l0l/environments/s01/services/svc0103?action=upgrade", expectedBody ).reply( 200, {
-		id: "svc0103",
-		name: "Service 03",
-		accountId: "l0l",
-	    environmentId: "s01",
-		description: "A test service",
-		state: "active",
-		launchConfig: {
-			imageUuid: "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_2_123efg"
-		},
-		actions: {
-			upgrade: baseURL + "/v1/projects/l0l/environments/s01/services/svc0103?action=upgrade"
-		}
-});*/
-                                
-rancherHost.get( "/v1/projects/l0l/environments" ).reply( 200, {
-	data: [ {
-		id: "s01",
-		name: "Stack 1",
-		accountId: "l0l",
-		description: "A test stack",
-		state: "active",
-		links: {
-			services: baseURL + "/v1/projects/l0l/environments/s01/services"
-		}
-	} ]
-} );
-                    
-rancherHost.get( "/v1/projects/l0l/environments/s01/services" ).reply( 200, {
-	data: [{
-		id: "svc0102",
-		name: "Service 02",
-		accountId: "l0l",
-		environmentId: "s01",
-		description: "A test service",
-		state: "active",
-		launchConfig: {
-			imageUuid: "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef"
-		},
-		actions: {
-		  upgrade: baseURL + "/v1/projects/l0l/environments/s01/services/svc0102?action=upgrade"
-	    }
-	}]
-} );      
-                        
-                        
-/*rancherHost.post( "/v1/projects/l0l/environments/s01/services/svc0102?action=upgrade", expectedBody ).reply( 200, {
-	id: "svc0102",
-	name: "Service 02",
-	accountId: "l0l",
-	environmentId: "s01",
-	description: "A test service",
-	state: "active",
-	launchConfig: {
-		imageUuid: "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_2_123efg"
-	},
-	actions: {
-		upgrade: baseURL + "/v1/projects/l0l/environments/s01/services/svc0102?action=upgrade"
-	}
-} );      
-                            
- rancherHost.post( "/v1/projects/l0l/environments/s01/services/svc0102?action=upgrade", expectedBody ).reply( 200, {
-	id: "svc0102",
-	name: "Service 02",
-	accountId: "l0l",
-	environmentId: "s01",
-	description: "A test service",
-	state: "active",
-	launchConfig: {
-		imageUuid: "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_1_123efg"
-	},
-	actions: {
-		upgrade: baseURL + "/v1/projects/l0l/environments/s01/services/svc0102?action=upgrade"
-	}
-} );*/
-                                             
-console.log("running upgrade");
-    return integration.upgrade({data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}})
+function upgradeMock(arg) {
+    var promiseGen = when.defer();
+    promiseGen.resolve([
+            {
+                "id": "svc0102",
+                "name": "Service 02",
+                "environmentId": "l0l",
+                "environmentName": "Test",
+                "stackId": "s01",
+                "stackName": "",
+                "description": "A test service",
+                "state": "active",
+                "launchConfig": {
+                    "imageUuid": "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef"
+                },
+                "droneImage": "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
+                "buildInfo": {
+                    "newImage": "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
+                    "docker": {
+                        "image": "cowpoke",
+                        "repo": "arob",
+                        "tag": "arobson_cowpoke_master_0.1.0_1_abcdef"
+                    },
+                    "owner": "arobson",
+                    "repository": "cowpoke",
+                    "branch": "master",
+                    "version": "0.1.0",
+                    "build": "1",
+                    "commit": "abcdef"
+                },
+                "transition": {
+                    "error": false
+                }
+            }
+        ]);
+	return promiseGen.promise
 }
-testUpgrade().then(console.log)
+
+function listEnvironmentsMock() {
+    var promiseGen = when.defer()
+    promiseGen.resolve({ 
+		Test: { 
+   			id: 'l0l',
+     		name: 'Test',
+    		state: 'active',
+     		listStacks: function() {},
+     		listContainers: function() {},
+     		listServices: function() {},
+     		upgrade: upgradeMock
+     	}
+    });
+	return promiseGen.promise	
+}
+
+function rancherMock(arg, arg2) {
+	//console.log("In my mock")
+    var promisGenerator = when.defer();
+    promisGenerator.resolve({
+		listEnvironments: listEnvironmentsMock
+	});
+	return promisGenerator.promise
+}
+
+function getAllEnvMock() {
+    var promisGen = when.defer()
+    promisGen.resolve([{
+        "name": "test",
+        "baseUrl": "http://example.com",
+        "_id": "VoKtrtXdqRS3VDAV",
+        "image": "helloworld",
+        "key": "key",
+        "secret": "secret"
+    }]);
+    return promisGen.promise
+}
+
+function getChannelsMock() {
+    var promisGen = when.defer();
+    promisGen.resolve(
+        ["TEST"]
+    );
+    return promisGen.promise
+}
+
+function mockListServices() {
+    var promisGen = when.defer()
+    promisGen.resolve(
+        [
+            {
+                "id": "svc0102",
+                "name": "Service 02",
+                "environmentId": "l0l",
+                "environmentName": "Test",
+                "stackId": "s01",
+                "stackName": "",
+                "description": "A test service",
+                "state": "upgraded",
+                "launchConfig": {
+                    "imageUuid": "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef"
+                },
+                "droneImage": "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
+                "buildInfo": {
+                    "newImage": "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
+                    "docker": {
+                        "image": "cowpoke",
+                        "repo": "arob",
+                        "tag": "arobson_cowpoke_master_0.1.0_1_abcdef"
+                    },
+                    "owner": "arobson",
+                    "repository": "cowpoke",
+                    "branch": "master",
+                    "version": "0.1.0",
+                    "build": "1",
+                    "commit": "abcdef"
+                },
+                "transition": {
+                    "error": false
+                }
+            }
+        ]
+    );
+    return promisGen.promise
+}
+
+var envMock = {
+    getAll: getAllEnvMock,
+    getChannels: getChannelsMock,
+    listServices : mockListServices
+}
+
+var slackMock = {
+    send: function(channel) {/*console.log("Would send slack message to " + channel)*/}
+}
+
+var integration = proxyquire("../../resource/environment/integration.js", {"../../src/rancher": rancherMock, "../../src/data/nedb/environment" : envMock, "../../src/slack" : slackMock });
+
+
+//console.log("running upgrade");
+function logResults(res) {
+    console.log(JSON.stringify(res, null, 4));
+}
+integration.upgrade({data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}}).then(logResults);
