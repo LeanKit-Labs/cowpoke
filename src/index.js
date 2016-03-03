@@ -16,6 +16,7 @@ fount.register( "slack", slack );
 
 var host = hyped.createHost( autohost, {
 	port: config.host.port,
-	fount: fount
+	fount: fount,
+	handleRouteErrors: true
 } );
 host.start();

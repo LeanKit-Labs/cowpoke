@@ -14,7 +14,7 @@ function onMessage( message ) {
 
 function tell( slack, target, message ) {
 	var dm = slack.getDMByName( target );
-	if( !dm ) {
+	if ( !dm ) {
 		var user = slack.getUserByName( target );
 		slack.openDM( user.id, function() {
 			var dm = slack.getDMByName( target );
@@ -27,7 +27,7 @@ function tell( slack, target, message ) {
 
 function send( slack, name, message ) {
 	var target = slack.getChannelGroupOrDMByName( name );
-	if( !target ) {
+	if ( !target ) {
 		console.error( "Can't tell", name, "anything. Nothing matching that found." );
 	} else {
 		target.send( message );

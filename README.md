@@ -1,12 +1,10 @@
 ## cowpoke
 
-> Note: this is a proof of concept. A more sophisticated version may follow if this works as intended.
+> Note: this is alphaware and subject to lots of changes
 
 A service to handle configurable rancher service upgrade patterns.
 
 ## Configuration
-
-> Note: database configuration sections/variables are mutually exclusive. Pick one and provide the values for it or roll with the defaults. NEDB is the default data adapter, Postgres will only be used if a host value is specified.
 
 ### JSON
 Defaults shown below. Empty values mean no default provided.
@@ -194,15 +192,16 @@ __Response__
 ```
 
 ## Installation & Use
-Simplest way to use this is using the Docker image: `arob/cowpoke`.
+Simplest way to use this is using the Docker image: `leankit/cowpoke`.
 
 __With NEDB__
 
 ```bash
-docker pull arob/cowpoke:latest
+docker pull leankit/cowpoke:latest
 docker run --name cowpoke -d --restart=always \
 	-v /path/on/host:/app/src/data \
-	arob/cowpoke:latest
+	-p 80:8800 \
+	leankit/cowpoke:latest
 ```
 
 ## Building
