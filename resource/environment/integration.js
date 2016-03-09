@@ -4,14 +4,15 @@ var when = require( "when" );
 var rancherFn = require( "../../src/rancher" );
 var format = require( "util" ).format;
 var environment = require( "../../src/data/nedb/environment" );
-var slack = require( "../../src/slack" );
-
+//var log = console.log;
 var statusIntervals = {};
 var pendingUpgrade = {};
 
-function onServiceList( env, channels, services ) {
+function onServiceList( env, channels, slack, services ) {
+        //log("onServiceList in integration.js: environment (env) = " + JSON.stringify(env, null, 4) + ", channels = " + JSON.stringify(channels, null, 4));
 		_.each( services, function( service ) {
 			if( pendingUpgrade[ service.id ] && service.state === "upgraded" ) {
+                //log("Starting send process");
 				var message = format( "The service %s in environment %s has upgraded successfully, amigo.",
 					service.name, env.name );
 				_.each( channels, function( channel ) {
@@ -23,14 +24,15 @@ function onServiceList( env, channels, services ) {
 	}
 
 function checkStatus( env, slack, channels ) {
-	environment.listServices()
-		.then( onServiceList.bind( null, env, channels ) );
+    //log("checkStatus in integration.js: slack = " + JSON.stringify(slack, null, 4) + ", environment = " + JSON.stringify(env, null, 4) +", channels = " + JSON.stringify(channels, null, 4)+", enviorment.js = " + JSON.stringify(environment, null, 4));
+	env.listServices().then( onServiceList.bind( null, env, channels, slack ) );
 }
 
-function createServiceChecks( environment, slack, services, channels ) {
+function createServiceChecks( env, slack, services, channels ) {
+    //log("createServiceChecks in integration.js: slack = " + JSON.stringify(slack, null, 4) + ", environment = " + JSON.stringify(environment, null, 4) + ", services = " + JSON.stringify(services, null, 4)+", channels = " + JSON.stringify(channels, null, 4));
 	_.each( services, function( service ) {
 		if( !statusIntervals[ service.environmentId ] ) {
-			statusIntervals = setInterval( checkStatus.bind( null, environment, slack, channels ), 5000 );
+			statusIntervals = setInterval( checkStatus.bind( null, env, slack, channels ), 5000 );
 		}
 		if( !pendingUpgrade[ service.id ] ) {
 			pendingUpgrade[ service.id ] = true;
@@ -39,16 +41,19 @@ function createServiceChecks( environment, slack, services, channels ) {
     }
 
 function onFailure( err ) {
+    //log("onFailure in integration.js: err = " + JSON.stringify(err, null, 4));
 	return { data: {
 		message: err.message
 	}, status: 500 };
 }
 
 function onSuccess( data ) {
+    //log("onSuccess in integration.js: data = " + JSON.stringify(data, null, 4));
 	return { data: data };
 }
 
 function onUpdated( env ) {
+    //log("onUpdated in integration.js: env = " + JSON.stringify(env, null, 4));
     return {
 		status: 200,
 		data: env
@@ -56,6 +61,7 @@ function onUpdated( env ) {
 }
 
 function onCreated() {
+    //log("onCreated in integration.js");
 		return {
 			data: {
 			message: "Created"
@@ -65,7 +71,7 @@ function onCreated() {
 
 
 function onError( err ) {
-	console.log( "Error", err );
+    //log( "onError in integration.js: Error = ", err );
 	return {
 		status: 500,
 		data: {
@@ -75,7 +81,8 @@ function onError( err ) {
 }
 
 
-function onEnvironment(data, image, env) {
+function onEnvironment(data, env) {
+    //log("onEnvironment in integration.js: data = " + JSON.stringify(data, null, 4) + "environment (env) = " + JSON.stringify(env, null, 4));
 	try {
 		env.slackChannels = env.slackChannels || [];
 		_.each( data, function( item ) {
@@ -100,6 +107,7 @@ function onEnvironment(data, image, env) {
 }
 
 function onUpgradeError( name, error ) {
+    //log("onUpgradeError in integration.js: name = "+name+", error = "+error.message);
 	return {
 		status: 500,
 		data: {
@@ -108,30 +116,36 @@ function onUpgradeError( name, error ) {
 	};
 }
 
-function onChannels( image, environment, services, channels ) {
+function onChannels( image, env, services, slack, channels) {
+    //log("onChannels in integration.js: image = " + image + ", environment = " + JSON.stringify(env, null, 4) + ", channels = " + JSON.stringify(channels, null, 4));
 	if( channels && channels.length && services && services.length ) {
+       // log("Start the sending process");
 		var names = _.pluck( _.flatten( services ), "name" );
 		names[ 0 ] = "\n - " + names[ 0 ];
 		var message = format( "Upgrading the following services to %s, hombre: %s",
 		image, names.join( "\n - " ) );
 		_.each( channels, function( channel ) {
+            //log("Sending slack message: " + message + "to: " + channel);
 			slack.send( channel, message );
 		} );
-		createServiceChecks( environment, slack, services, channels );
+		createServiceChecks( env, slack, services, channels );
 	}
 }
 
-function onEnvironmentsLoaded( image, environments ) {
+function onEnvironmentsLoaded( image, slack, environments ) {
+    //log('onEnvironmentsLoaded in integration.js: image = ' + image + ", environments = " + JSON.stringify(environments, null, 4));
 	var name = _.keys( environments )[ 0 ];
 	var env = environments[ name ];
-    return env.upgrade( image ).then(onServices.bind( null, image, name, environment ), onUpgradeError.bind( null, name ));
+    return env.upgrade( image ).then(onServices.bind( null, image, name, env, slack ), onUpgradeError.bind( null, name )); //TODO
 }
 
-function onRancher(image, rancher ) {
-    return rancher.listEnvironments().then( onEnvironmentsLoaded.bind(null, image), onConnectionError );
+function onRancher(image, slack, rancher ) {
+    //log('onRancher in integration.js: image = ' + image + 'rancher = ' + JSON.stringify(rancher, null, 4) );
+    return rancher.listEnvironments().then( onEnvironmentsLoaded.bind(null, image, slack), onConnectionError );
 }
 
 function onConnectionError( error ) {
+    //log('onConnectionError in integration.js: error = ' + JSON.stringify(error, null, 4));
 	return {
 		status: 500,
 		data: {
@@ -140,16 +154,17 @@ function onConnectionError( error ) {
 	};
 }
 
-function onEnvironments(image, environments) {
-	
+function onEnvironments(image, slack, environments) {
+	//log('onEnvironments in integration.js: image = ' + image + ', environments = ' + JSON.stringify(environments, null, 4));
 	var upgrades = _.map( environments, function( env ) {
 		return rancherFn( env.baseUrl, {
 			key: env.key,
 			secret: env.secret
-		} ).then( onRancher.bind(null, image), onConnectionError );
+		} ).then( onRancher.bind(null, image, slack), onConnectionError );
 	} );
-	
+    
 	return when.all( upgrades ).then(function( lists ) {
+        //log('when.all callback insided onEnvironments in integration.js: upgradedServices = ' + JSON.stringify(lists, null, 4));
 		if ( lists.length > 0 ) {
 			return {
 				data: {
@@ -167,6 +182,7 @@ function onEnvironments(image, environments) {
 }
 
 function onReadError( error ) {
+    //log('onReadError in integration.js: Recived error ' + JSON.stringify(error, null, 4));
 	return {
 		status: 404,
 		data: {
@@ -175,31 +191,37 @@ function onReadError( error ) {
 	};
 }
 
-function onServices( image, environmentName, env, services ) {
-	var channels = environment.getChannels( environmentName ).then( onChannels.bind( null, image, env, services ) );
+function onServices( image, environmentName, env, slack, services ) {
+    //log('onServices in integration.js. image = ' + image + ', environmentName = ' + environmentName + ', environment (env paramater) = ' + JSON.stringify(env, null, 4) + ", slack = " + JSON.stringify(slack, null, 4));
+	var channels = environment.getChannels( environmentName ).then( onChannels.bind( null, image, env, services, slack ) );
     return services;
 }
 
 
 function list() {
+    //log('list in integration.js: Recived list call');
 	return environment.getAll().then(onSuccess, onFailure);
 }
 
 function create( envelope ) {
+//log('create in integration.js: Recived create call.');
 	var data = envelope.data;
 	return environment.add( data ).then( onCreated, onFailure );
 }
 
 function configure( envelope ) {
+    //log('configure in integration.js: Recived configure call.');
 	var data = envelope.data;
 	var name = data.environment;
 
     return environment.getByName( name ).then( onEnvironment.bind(null, data), onError );
 }
 
-function upgrade( envelope ) {
+function upgrade(slack, envelope ) {
+    //console.log('upgrade method in integration.js: Recived upgrade call.');
 	var image = envelope.data.image;
-	return environment.getAll().then( onEnvironments.bind(null, image), onReadError );
+    //log ('upgrade method in integration.js: image = ' + image);
+	return environment.getAll().then( onEnvironments.bind(null, image, slack), onReadError );
 }
 
 

@@ -6,3 +6,4 @@ gulfile.js
 spec/
 coverage/
 data/*.db
+.DS_Store

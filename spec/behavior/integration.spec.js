@@ -1,4 +1,4 @@
-//var test = proxyquire("./libToTest", {"./libToMock": function() {return "I was Mocked :)"}})
+require("../setup");
 var proxyquire = require("proxyquire").callThru();
 var when = require("when");
 
@@ -40,24 +40,9 @@ function upgradeMock(arg) {
 	return promiseGen.promise;
 }
 
-function listEnvironmentsMock() {
-    var promiseGen = when.defer();
-    promiseGen.resolve({ 
-		Test: { 
-   			id: 'l0l',
-     		name: 'Test',
-    		state: 'active',
-     		listStacks: function() {},
-     		listContainers: function() {},
-     		listServices: function() {},
-     		upgrade: upgradeMock
-     	}
-    });
-	return promiseGen.promise;
-}
+
 
 function rancherMock(arg, arg2) {
-	//console.log("In my mock")
     var promisGenerator = when.defer();
     promisGenerator.resolve({
 		listEnvironments: listEnvironmentsMock
@@ -66,6 +51,7 @@ function rancherMock(arg, arg2) {
 }
 
 function getAllEnvMock() {
+    
     var promisGen = when.defer();
     promisGen.resolve([{
         "name": "test",
@@ -78,10 +64,26 @@ function getAllEnvMock() {
     return promisGen.promise;
 }
 
+function getEnvMock() {
+    var promisGen = when.defer();
+    promisGen.resolve({
+        "name": "test",
+        "baseUrl": "http://example.com",
+        "_id": "VoKtrtXdqRS3VDAV",
+        "image": "helloworld",
+        "key": "key",
+        "secret": "secret",
+        "slackChannels": channelsList
+    });
+    return promisGen.promise;
+}
+
+var channelsList = ["TEST1", "TEST2"];
+
 function getChannelsMock() {
     var promisGen = when.defer();
     promisGen.resolve(
-        ["TEST"]
+        channelsList
     );
     return promisGen.promise;
 }
@@ -126,21 +128,207 @@ function mockListServices() {
     return promisGen.promise;
 }
 
+function listEnvironmentsMock() {
+    var promiseGen = when.defer();
+    promiseGen.resolve({ 
+		Test: { 
+   			id: 'l0l',
+     		name: 'Test',
+    		state: 'active',
+     		listStacks: function() {},
+     		listContainers: function() {},
+     		listServices: mockListServices,
+     		upgrade: upgradeMock
+     	}
+    });
+	return promiseGen.promise;
+}
+
 var envMock = {
+    add: getEnvMock,
     getAll: getAllEnvMock,
     getChannels: getChannelsMock,
-    listServices : mockListServices
+    getByName: getEnvMock
 };
 
-var slackMock = {
-    send: function(channel) {/*console.log("Would send slack message to " + channel)*/}
+var slackMockDoNothing = {
+    send: function(channel) {}
 };
 
-var integration = proxyquire("../../resource/environment/integration.js", {"../../src/rancher": rancherMock, "../../src/data/nedb/environment" : envMock, "../../src/slack" : slackMock });
+describe('Upgrade', function () {
+    
+    it('should return the upgraded services', function (done) {
+        
+        var expectedReturn = {
+            "data": {
+                "upgradedServices": [
+                    {
+                        "id": "svc0102",
+                        "name": "Service 02",
+                        "environmentId": "l0l",
+                        "environmentName": "Test",
+                        "stackId": "s01",
+                        "stackName": "",
+                        "description": "A test service",
+                        "state": "active",
+                        "launchConfig": {
+                            "imageUuid": "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef"
+                        },
+                        "droneImage": "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
+                        "buildInfo": {
+                            "newImage": "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
+                            "docker": {
+                                "image": "cowpoke",
+                                "repo": "arob",
+                                "tag": "arobson_cowpoke_master_0.1.0_1_abcdef"
+                            },
+                            "owner": "arobson",
+                            "repository": "cowpoke",
+                            "branch": "master",
+                            "version": "0.1.0",
+                            "build": "1",
+                            "commit": "abcdef"
+                        },
+                        "transition": {
+                            "error": false
+                        }
+                    }
+                ]
+            }
+        };
+        
+        function testResults(result) {
+            result.should.deep.equal(expectedReturn);
+            done();
+        }
+        
+        var integration = proxyquire("../../resource/environment/integration.js", 
+            {"../../src/rancher": rancherMock,
+            "../../src/data/nedb/environment" : envMock
+            }
+        );
+        
+        integration.upgrade(slackMockDoNothing, {data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}}).then(testResults);
+    });
+    
+    
+    it('should call out to slack', function (done) {
+        
+        var slackMockTest = {
+            send: function(channel, message) {
+                
+                channelsList.indexOf(channel).should.not.equal(-1);
+                message.should.equal("Upgrading the following services to arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef, hombre: \n - Service 02");
+                
+                if (channelsList.indexOf(channel) === (channelsList.length-1)) {
+                     done();
+                }
+               
+                
+            }
+        };
+        
+        var integration = proxyquire("../../resource/environment/integration.js", 
+            {"../../src/rancher": rancherMock,
+            "../../src/data/nedb/environment" : envMock
+            }
+        );
+        
+        integration.upgrade(slackMockTest, {data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}});
+    });
+    
+    
+    
+});
+
+describe('Configure', function () {
+        
+        it('configure the service', function (done) {
+            var integration = proxyquire("../../resource/environment/integration.js", 
+                    {"../../src/rancher": rancherMock,
+                    "../../src/data/nedb/environment" : envMock
+                    }
+            );
+        
+        var simRequest = {
+           data: [
+               {
+                   "op": "add",
+                   "field": "slackChannels",
+                    "value": "new-slack-channel-name"
+               },
+               {
+                    "op": "remove",
+                    "field": "slackChannels",
+                    "value": "TEST2"
+               }
+          ]
+        };
+        
+        var expectedValue = {
+            "status": 200,
+            "data": {
+                "name": "test",
+                "baseUrl": "http://example.com",
+                "_id": "VoKtrtXdqRS3VDAV",
+                "image": "helloworld",
+                "key": "key",
+                "secret": "secret",
+                "slackChannels": [
+                    "TEST1",
+                    "new-slack-channel-name"
+                ]
+            }
+        };
+        
+        function testResult(result) {
+            result.should.deep.equal(expectedValue);
+            done();
+        }
+        
+        integration.configure(simRequest).then(testResult);
+        });
+        
+    });
+    
+
+describe('List', function () {
+    var integration = proxyquire("../../resource/environment/integration.js", 
+        {
+            "../../src/rancher": rancherMock,
+            "../../src/data/nedb/environment" : envMock
+        }
+    );
+    
+    it('should list environments', function (done) {
+        function testResults(results) {
+            getAllEnvMock().then(function (envs) {
+                results.data.should.deep.equal(envs);
+                done();
+            });
+        }
+        
+        integration.list().then(testResults);
+    });
+});
 
 
-//console.log("running upgrade");
-function logResults(res) {
-    console.log(JSON.stringify(res, null, 4));
-}
-integration.upgrade({data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}}).then(logResults);
+describe('Create', function () {
+    
+    it('should create an environment', function (done) {
+        var integration = proxyquire("../../resource/environment/integration.js", 
+            {"../../src/rancher": rancherMock,
+            "../../src/data/nedb/environment" : envMock
+            }
+        );
+        
+        function testResults(res) {
+            res.data.message.should.equal("Created");
+            done();
+        }
+        
+        integration.create({data: "test"}).then(testResults);
+    });
+    
+});
+
