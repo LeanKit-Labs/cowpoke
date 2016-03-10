@@ -191,9 +191,11 @@ function onReadError( error ) {
 	};
 }
 
+
 function onServices( image, environmentName, env, slack, services ) {
     //log('onServices in integration.js. image = ' + image + ', environmentName = ' + environmentName + ', environment (env paramater) = ' + JSON.stringify(env, null, 4) + ", slack = " + JSON.stringify(slack, null, 4));
-	var channels = environment.getChannels( environmentName ).then( onChannels.bind( null, image, env, services, slack ) );
+	environment.getChannels( environmentName ).then( onChannels.bind( null, image, env, services, slack ) );
+    //console.log("onServices in integration.js: Returning: "+JSON.stringify(services, null, 4));
     return services;
 }
 
@@ -206,7 +208,15 @@ function list() {
 function create( envelope ) {
 //log('create in integration.js: Recived create call.');
 	var data = envelope.data;
-	return environment.add( data ).then( onCreated, onFailure );
+    if (data.name && data.baseUrl && data.key && data.secret && data.slackChannels) {
+       return environment.add( data ).then( onCreated, onFailure );
+    } else {
+       return {
+           data: {
+			    message: "Invaild Environment"
+		    }
+        };
+    }
 }
 
 function configure( envelope ) {

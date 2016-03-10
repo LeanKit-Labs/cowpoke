@@ -326,9 +326,29 @@ describe('Create', function () {
             res.data.message.should.equal("Created");
             done();
         }
-        
-        integration.create({data: "test"}).then(testResults);
+        var envToCreate = {
+            "name": "d1-d02",
+            "baseUrl": "https://rancher.leankit.io",
+            "key": "key",
+            "secret": "secret",
+            "slackChannels": [
+                "pd-builds"
+            ]
+        };
+        integration.create({data: envToCreate}).then(testResults);
     });
+    
+    it('should not create an environment', function (done) {
+        var integration = proxyquire("../../resource/environment/integration.js", 
+            {"../../src/rancher": rancherMock,
+            "../../src/data/nedb/environment" : envMock
+            }
+        );
+       
+        expect(integration.create({data: {}}).data.message).to.equal("Invaild Environment");
+        done();
+    });
+    
     
 });
 
