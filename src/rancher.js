@@ -170,6 +170,8 @@ function parseService( service, http, environment, stack ) {
 	return definition;
 }
 
+
+
 function upgradeAll( http, environment, dockerImage ) {
 	/*log("upgradeAll in rancher.js: arguments = " + JSON.stringify({
 		environment: environment,
@@ -177,14 +179,42 @@ function upgradeAll( http, environment, dockerImage ) {
 	}, null, 4));*/
 	var newInfo = util.getImageInfo( dockerImage );
 
+    function onStackServices(stackServices) {
+        var allservices = [];
+        for (var i = 0; i < stackServices.length; i++) {
+            for (var key in stackServices[i]) {
+                if (stackServices[i].hasOwnProperty(key)) {
+                    allservices.push(stackServices[i][key]);       
+                }
+            }
+        }
+        return onServices(allservices);
+    }
+
+    function onStacks(stacks) {
+        var promises = [];
+        for (var key in stacks) {
+            if (stacks.hasOwnProperty(key)) {
+                promises.push(stacks[key].listServices());
+            }
+        }
+
+        return when.all(promises);
+    }
+
 	function onServices( list ) {
-        //log("onServices in upgradeAll in rancher.js: list = " + JSON.stringify(list,  null, 4));
+        //console.log("onServices in upgradeAll in rancher.js: list = " + JSON.stringify(list,  null, 4));
 		return _.filter( list, function( service ) {
 			return util.shouldUpgrade( service, newInfo );
 		} );
 	}
 
 	function onServiceError( err ) {
+        //log("onServiceError in upgradeAll in rancher.js: err = " + err.message);
+		return [];
+	}
+    
+    function onStacksError( err ) {
         //log("onServiceError in upgradeAll in rancher.js: err = " + err.message);
 		return [];
 	}
@@ -199,10 +229,12 @@ function upgradeAll( http, environment, dockerImage ) {
 			return [];
 		}
 	}
-
-	return environment.listServices()
-		.then( onServices, onServiceError )
-		.then( upgradeAffectedServices );
+   
+	return  environment.listStacks()
+        .then(onStacks, onStacksError)
+        .then(onStackServices, onServiceError)
+        .then(upgradeAffectedServices);
+    
 }
 
 function upgradeService( http, upgradeUrl, service, environment, stack, dockerImage ) {

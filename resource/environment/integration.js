@@ -111,6 +111,7 @@ function onUpgradeError( name, error ) {
 	return {
 		status: 500,
 		data: {
+            error: error.stack,
 			message: "An error occurred during upgrade of environment '" + name + "'"
 		}
 	};
