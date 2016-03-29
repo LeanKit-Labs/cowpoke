@@ -59,6 +59,21 @@ describe( "Rancher API", function() {
 		describe( "when upgrading at environment", function() {
 			var updated;
 			before( function() {
+                rancherHost
+					.get( "/v1/projects/l0l/environments" )
+					.reply( 200, {
+						data: [ {
+							id: "s01",
+							name: "Stack 1",
+							accountId: "l0l",
+							description: "A test stack",
+							state: "active",
+							links: {
+								services: baseURL + "/v1/projects/l0l/services"
+							}
+						} ]
+					} );
+                
 				rancherHost
 				.get( "/v1/projects/l0l/services" )
 				.reply( 200, {
