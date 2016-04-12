@@ -17,7 +17,23 @@ function getImageInfo( image ) {
 		dockerImage = dockerParts[ 1 ];
 		dockerRepo = "";
 	}
-	var info = tag.split( "_" );
+	//Tags are in the form of 
+    //OWNER_REPO_BRANCH_VERSION_BUILD_COMMIT
+    //Since branch can include _ characters it must be parsed last.
+    var owner = tag.substr(0, tag.indexOf('_'));
+    var remainingTag = tag.substr(tag.indexOf('_')+1);
+    var repo = remainingTag.substr(0, remainingTag.indexOf('_'));
+    remainingTag = remainingTag.substr(remainingTag.indexOf('_')+1);
+    //now parse paramater from the end untill we get back to branch
+    var commit = remainingTag.substr(remainingTag.lastIndexOf('_')+1);
+    remainingTag = remainingTag.substr(0 , remainingTag.lastIndexOf('_'));
+    var build = remainingTag.substr(remainingTag.lastIndexOf('_')+1);
+    remainingTag = remainingTag.substr(0 , remainingTag.lastIndexOf('_'));
+    var version = remainingTag.substr(remainingTag.lastIndexOf('_')+1);
+    remainingTag = remainingTag.substr(0 , remainingTag.lastIndexOf('_'));
+    //now the branch must be whatever is left
+    var branch = remainingTag;
+   
 	return {
 		newImage: image,
 		docker: {
@@ -25,12 +41,12 @@ function getImageInfo( image ) {
 			repo: dockerRepo,
 			tag: tag
 		},
-		owner: info[ 0 ],
-		repository: info[ 1 ],
-		branch: info[ 2 ],
-		version: info[ 3 ],
-		build: info.length === 6 ? info[ 4 ] : "",
-		commit: info.length === 6 ? info[ 5 ] : info[ 4 ]
+		owner: owner,
+		repository: repo,
+		branch: branch,
+		version: version,
+		build: build,
+		commit: commit
 	};
 }
 
@@ -42,7 +58,11 @@ function shouldUpgrade( service, newInfo ) {
     //log("in shouldUpgrade in util.js: current's owner = " + info.owner + " new images owner = " + newInfo.owner);
     //log("in shouldUpgrade in util.js: current's repository = " + info.repository + " new images repository = " + newInfo.repository);
     //log("in shouldUpgrade in util.js: current's branch = " + info.branch + " new images branch = " + newInfo.branch);
-	var compatible = info.owner === newInfo.owner &&
+	var valid = (info.owner !== "") && (info.repository !== "") && (info.branch !== "") && (info.version !== "") &&  (info.build !== "") &&  (info.commit !== "");
+    if (!valid) {//short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
+        return false;
+    } 
+    var compatible = info.owner === newInfo.owner &&
 					info.repository === newInfo.repository &&
 					info.branch === newInfo.branch;
     //log("in shouldUpgrade in util.js: compatible = " + compatible);
