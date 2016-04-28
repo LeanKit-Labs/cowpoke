@@ -26,7 +26,7 @@ function tell( slack, target, message ) {
 }
 
 function send( slack, name, message ) {
-    //console.log("Trying to send: \"" + message + "\" to: " + name);
+	//console.log("Trying to send: \"" + message + "\" to: " + name);
 	var target = slack.getChannelGroupOrDMByName( name );
 	if ( !target ) {
 		console.error( "Can't tell", name, "anything. Nothing matching that found." );
