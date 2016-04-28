@@ -59,8 +59,8 @@ describe( "Rancher API", function() {
 		describe( "when upgrading at environment", function() {
 			var updated;
 			before( function() {
-                rancherHost
-					.get( "/v1/projects/l0l/environments" )
+				rancherHost
+									.get( "/v1/projects/l0l/environments" )
 					.reply( 200, {
 						data: [ {
 							id: "s01",
@@ -73,7 +73,6 @@ describe( "Rancher API", function() {
 							}
 						} ]
 					} );
-                
 				rancherHost
 				.get( "/v1/projects/l0l/services" )
 				.reply( 200, {
@@ -81,9 +80,9 @@ describe( "Rancher API", function() {
 						{
 							id: "svc0102",
 							name: "Service 02",
-                            type: "service",
-							accountId: "l0l", 
-							environmentId: "s01", 
+							type: "service",
+							accountId: "l0l",
+							environmentId: "s01",
 							description: "A test service",
 							state: "active",
 							launchConfig: {
@@ -96,9 +95,9 @@ describe( "Rancher API", function() {
 						{
 							id: "svc0103",
 							name: "Service 03",
-                            type: "service",
+							type: "service",
 							accountId: "l0l",
-							environmentId: "s01", 
+							environmentId: "s01",
 							description: "A test service",
 							state: "active",
 							launchConfig: {
@@ -115,7 +114,7 @@ describe( "Rancher API", function() {
 					id: "svc0103",
 					name: "Service 03",
 					accountId: "l0l",
-                    type: "service",
+					type: "service",
 					environmentId: "s01",
 					description: "A test service",
 					state: "active",
@@ -141,7 +140,7 @@ describe( "Rancher API", function() {
 						id: "svc0103",
 						name: "Service 03",
 						accountId: "l0l",
-                        type: "service",
+						type: "service",
 						environmentId: "s01",
 						description: "A test service",
 						state: "active",
@@ -227,7 +226,7 @@ describe( "Rancher API", function() {
 									name: "Service 02",
 									accountId: "l0l",
 									environmentId: "s01",
-                                    type: "service",
+									type: "service",
 									description: "A test service",
 									state: "active",
 									launchConfig: {
@@ -286,7 +285,7 @@ describe( "Rancher API", function() {
 							.reply( 200, {
 								id: "svc0102",
 								name: "Service 02",
-                                type: "service",
+								type: "service",
 								accountId: "l0l",
 								environmentId: "s01",
 								description: "A test service",
@@ -350,7 +349,7 @@ describe( "Rancher API", function() {
 								accountId: "l0l",
 								environmentId: "s01",
 								description: "A test service",
-                                type: "service",
+								type: "service",
 								state: "active",
 								launchConfig: {
 									imageUuid: "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_1_123efg"
