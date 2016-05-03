@@ -22,14 +22,14 @@ function getImageInfo( image ) {
 	var remainingTag = tag.substr( tag.indexOf( "_" ) + 1 );
 	var repo = remainingTag.substr( 0, remainingTag.indexOf( "_" ) );
 	remainingTag = remainingTag.substr( remainingTag.indexOf( "_" ) + 1 );
-	//now parse paramater from the end untill we get back to branch
+	//Now parse paramater from the end untill we get back to branch
 	var commit = remainingTag.substr( remainingTag.lastIndexOf( "_" ) + 1 );
 	remainingTag = remainingTag.substr( 0, remainingTag.lastIndexOf( "_" ) );
 	var build = remainingTag.substr( remainingTag.lastIndexOf( "_" ) + 1 );
 	remainingTag = remainingTag.substr( 0, remainingTag.lastIndexOf( "_" ) );
 	var version = remainingTag.substr( remainingTag.lastIndexOf( "_" ) + 1 );
 	remainingTag = remainingTag.substr( 0, remainingTag.lastIndexOf( "_" ) );
-	//now the branch must be whatever is left
+	//Now the branch must be whatever is left
 	var branch = remainingTag;
 
 	return {
@@ -49,12 +49,11 @@ function getImageInfo( image ) {
 }
 
 function shouldUpgrade( service, newInfo ) {
-	//log("in shouldUpgrade in util.js");
 	var info = service.buildInfo;
 	var version = _.filter( [ info.version, info.build ] ).join( "-" );
 	var newVersion = _.filter( [ newInfo.version, newInfo.build ] ).join( "-" );
 	var valid = ( info.owner !== "" ) && ( info.repository !== "" ) && ( info.branch !== "" ) && ( info.version !== "" ) && ( info.build !== "" ) && ( info.commit !== "" );
-	if ( !valid ) {//short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
+	if ( !valid ) { //short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
 		return false;
 	}
 	var compatible = info.owner === newInfo.owner &&
