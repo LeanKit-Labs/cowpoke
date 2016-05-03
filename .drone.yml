@@ -14,7 +14,7 @@ cache:
 
 publish:
   docker:
-    image: leankit/cowpoke
+    image: leankit/cowpoke:latest
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
