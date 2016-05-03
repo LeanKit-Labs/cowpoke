@@ -14,9 +14,11 @@ cache:
 
 publish:
   docker:
+    image: leankit/cowpoke
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
     repo: leankit/cowpoke
+    storage_driver: overlay
     when:
       branch: poc
