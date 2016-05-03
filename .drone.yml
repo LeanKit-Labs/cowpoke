@@ -4,8 +4,10 @@ build:
   environment:
   - NODE_ENV=dev
   commands:
-   - npm install
-   - npm test
+   - "npm install buildgoggles@0.2.0-3"
+   - "./node_modules/buildgoggles/bin/buildgoggles --releaseOwner=BanditSoftware --releaseBranch=master"
+   - "npm install"
+   - "npm test"
 
 cache:
   mount:
@@ -14,7 +16,7 @@ cache:
 
 publish:
   docker:
-    image: leankit/cowpoke:latest
+    image: leankit/drone-docker
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
