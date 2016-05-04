@@ -4,8 +4,9 @@ build:
   environment:
   - NODE_ENV=dev
   commands:
-   - npm install
-   - npm test
+   - "npm install buildgoggles@0.2.0-3"
+   - "npm test"
+   - "./node_modules/buildgoggles/bin/buildgoggles --releaseOwner=Leankit --releaseBranch=master"
 
 cache:
   mount:
@@ -20,5 +21,3 @@ publish:
     email: $$DOCKER_EMAIL
     repo: leankit/cowpoke
     storage_driver: overlay
-    when:
-      branch: poc
