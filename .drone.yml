@@ -13,6 +13,7 @@ cache:
     - .git
 publish:
   docker:
+    image: leankit/drone-docker
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
