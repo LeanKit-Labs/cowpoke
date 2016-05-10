@@ -1,22 +1,18 @@
 debug: true
 build:
-  image: node:5
-  environment:
-  - NODE_ENV=dev
+  image: "node:5"
   commands:
-   - "npm install buildgoggles@0.2.0-3"
-   - "./node_modules/buildgoggles/bin/buildgoggles --releaseOwner=BanditSoftware --releaseBranch=master"
-   - "npm install"
-   - "npm test"
-
+    - "npm install buildgoggles@0.2.0-3"
+    - "npm test"
+    - "./node_modules/buildgoggles/bin/buildgoggles --releaseOwner=Leankit --releaseBranch=master"
+  environment:
+    - NODE_ENV=dev
 cache:
   mount:
     - node_modules
     - .git
-
 publish:
   docker:
-    image: leankit/drone-docker
     username: $$DOCKER_USER
     password: $$DOCKER_PASS
     email: $$DOCKER_EMAIL
