@@ -1,6 +1,6 @@
 {
   "name": "cowpoke",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A service to handle configurable Rancher service upgrade patterns",
   "main": "src/index.js",
   "scripts": {
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/arobson/cowpoke#readme",
   "dependencies": {
-    "autohost": "^0.5.6",
+    "autohost": "^0.5.12",
     "configya": "^0.2.2",
     "fount": "^0.1.0",
     "hyped": "^0.5.1",
