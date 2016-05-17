@@ -14,7 +14,6 @@ fount.register( "environment", environments );
 var slack = require( "./slack" )( config.slack.token, environments );
 fount.register( "slack", slack );
 
-
 var host = hyped.createHost( autohost, {
 	port: config.host.port,
 	fount: fount,

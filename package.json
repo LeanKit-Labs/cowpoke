@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/arobson/cowpoke#readme",
   "dependencies": {
-    "autohost": "^0.5.12",
+    "autohost": "^0.6.0",
     "configya": "^0.2.2",
     "fount": "^0.1.0",
     "hyped": "^0.5.1",
