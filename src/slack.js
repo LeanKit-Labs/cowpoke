@@ -50,7 +50,6 @@ var nullReturn = {
 };
 
 module.exports = function( token ) {
-	token = 'abc'
 	if ( !token ) { //short circut if Slack is un-configured
 		console.warn( "Warning! Slack is not configured and no messages will be sent." );
 		return nullReturn;
