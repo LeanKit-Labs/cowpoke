@@ -214,7 +214,7 @@ function upgrade( slack, envelope ) {
 				data: {
 					message: "Image does not exist in Dockerhub"
 				},
-				status: 500
+				status: 400
 			};
 		}
 	} );
