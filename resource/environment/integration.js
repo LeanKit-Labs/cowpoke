@@ -205,7 +205,7 @@ function configure( envelope ) {
 function upgrade( slack, envelope ) {
 	var image = envelope.data.image;
 	var parsedPhase1 = image.split( ":" );
-	var parsed = parsedPhase1.split( "/" );
+	var parsed = parsedPhase1[0].split( "/" );
 	return dockerhub.checkExistance( parsed[0], parsed[1], parsedPhase1[1] ).then( function( tagExsits ) {
 		if ( tagExsits ) {
 			return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
