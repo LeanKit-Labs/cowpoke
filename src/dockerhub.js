@@ -15,7 +15,10 @@ function listTags( namesapce, name ) {
 	var options = {
 		uri: "https://registry.hub.docker.com/v1/repositories/" +
 			urlencode( namesapce ) + "/" + urlencode( name ) + "/tags",
-		json: true
+		json: true,
+		headers: {
+			Authorization: "Basic " + new Buffer( process.env.DOCKER_USER + ":" + process.env.DOCKER_PASS ).toString( "base64" )
+		}
 	};
 	return rp( options ).then( onRequest ).catch( onError );
 }

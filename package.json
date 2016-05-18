@@ -33,7 +33,9 @@
     "pg": "^4.4.3",
     "proxyquire": "^1.7.4",
     "request": "^2.67.0",
+    "request-promise": "^3.0.0",
     "semver": "^5.1.0",
+    "urlencode": "^1.1.0",
     "when": "^3.7.7"
   },
   "devDependencies": {
