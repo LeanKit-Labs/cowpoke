@@ -5,11 +5,7 @@ function onConnected() {
 }
 
 function onError( err ) {
-	if ( err == "invalid_auth" ) {
-		console.error( "Slack login Invalid. No messages will be sent." );
-	} else {
-		console.error( "Slack error: ", err );
-	}
+	console.error( "Slack error: ", err );
 }
 
 function onMessage( message ) {
