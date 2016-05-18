@@ -1,6 +1,16 @@
 var _ = require( "lodash" );
 var semver = require( "semver" );
 
+function checkInfo( info ) {
+	return ( info.owner !== "" ) &&
+	( info.repository !== "" ) &&
+	( info.branch !== "" ) &&
+	( info.version !== "" ) &&
+	( info.build !== "" ) &&
+	( info.commit !== "" ) &&
+	( semver.valid( info.version ) );
+}
+
 function getImageInfo( image ) {
 	image = image.replace( /^docker[:]/g, "" );
 	var imageParts = image.split( ":" );
@@ -50,12 +60,11 @@ function getImageInfo( image ) {
 
 function shouldUpgrade( service, newInfo ) {
 	var info = service.buildInfo;
-	var version = _.filter( [ info.version, info.build ] ).join( "-" );
-	var newVersion = _.filter( [ newInfo.version, newInfo.build ] ).join( "-" );
-	var valid = ( info.owner !== "" ) && ( info.repository !== "" ) && ( info.branch !== "" ) && ( info.version !== "" ) && ( info.build !== "" ) && ( info.commit !== "" );
-	if ( !valid ) { //short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
+	if ( !checkInfo( info ) ) { //short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
 		return false;
 	}
+	var version = _.filter( [ info.version, info.build ] ).join( "-" );
+	var newVersion = _.filter( [ newInfo.version, newInfo.build ] ).join( "-" );
 	var compatible = info.owner === newInfo.owner &&
 						info.repository === newInfo.repository &&
 						info.branch === newInfo.branch;
@@ -65,5 +74,6 @@ function shouldUpgrade( service, newInfo ) {
 
 module.exports = {
 	getImageInfo: getImageInfo,
-	shouldUpgrade: shouldUpgrade
+	shouldUpgrade: shouldUpgrade,
+	checkInfo: checkInfo
 };
