@@ -4,6 +4,7 @@ var when = require( "when" );
 var rancherFn = require( "../../src/rancher" );
 var format = require( "util" ).format;
 var environment = require( "../../src/data/nedb/environment" );
+var dockerhub = require( "../../src/dockerhub" );
 var statusIntervals = {};
 var pendingUpgrade = {};
 
@@ -39,7 +40,9 @@ function onFailure( err ) {
 	return {
 		data: {
 			message: err.message
-		}, status: 500 };
+		},
+		status: 500
+	};
 }
 
 function onSuccess( data ) {
@@ -201,7 +204,20 @@ function configure( envelope ) {
 
 function upgrade( slack, envelope ) {
 	var image = envelope.data.image;
-	return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
+	var parsedPhase1 = image.split( ":" );
+	var parsed = parsedPhase1.split( "/" );
+	return dockerhub.checkExistance( parsed[0], parsed[1], parsedPhase1[1] ).then( function( tagExsits ) {
+		if ( tagExsits ) {
+			return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
+		} else {
+			return {
+				data: {
+					message: "Image does not exist in Dockerhub"
+				},
+				status: 500
+			};
+		}
+	} );
 }
 
 module.exports = {
