@@ -50,6 +50,12 @@ function rancherMock( arg, arg2 ) {
 	return promisGenerator.promise;
 }
 
+var dockerMock = {
+	checkExistance: function( params ) {
+		return Promise.resolve( true );
+	}
+};
+
 function getAllEnvMock() {
 	var promisGen = when.defer();
 	promisGen.resolve( [ {
@@ -198,7 +204,8 @@ describe( "Upgrade", function() {
 
 		var integration = proxyquire( "../../resource/environment/integration.js", {
 			"../../src/rancher": rancherMock,
-			"../../src/data/nedb/environment": envMock
+			"../../src/data/nedb/environment": envMock,
+			"../../src/dockerhub": dockerMock
 		} );
 		integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
 	} );
@@ -213,7 +220,8 @@ describe( "Upgrade", function() {
 		};
 		var integration = proxyquire( "../../resource/environment/integration.js", {
 			"../../src/rancher": rancherMock,
-			"../../src/data/nedb/environment": envMock
+			"../../src/data/nedb/environment": envMock,
+			"../../src/dockerhub": dockerMock
 		} );
 		integration.upgrade( slackMockTest, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } );
 	} );
