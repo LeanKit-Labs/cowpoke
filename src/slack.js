@@ -5,7 +5,11 @@ function onConnected() {
 }
 
 function onError( err ) {
-	console.error( "Slack error: ", err );
+	if ( err == "invalid_auth" ) {
+		console.error( "Slack login Invalid. No messages will be sent." );
+	} else {
+		console.error( "Slack error: ", err );
+	}
 }
 
 function onMessage( message ) {
@@ -13,6 +17,9 @@ function onMessage( message ) {
 }
 
 function tell( slack, target, message ) {
+	if ( !slack.authenticated ) { //escape if bad auth
+		return;
+	}
 	var dm = slack.getDMByName( target );
 	if ( !dm ) {
 		var user = slack.getUserByName( target );
@@ -26,7 +33,9 @@ function tell( slack, target, message ) {
 }
 
 function send( slack, name, message ) {
-	//console.log("Trying to send: \"" + message + "\" to: " + name);
+	if ( !slack.authenticated ) { //escape if bad auth
+		return;
+	}
 	var target = slack.getChannelGroupOrDMByName( name );
 	if ( !target ) {
 		console.error( "Can't tell", name, "anything. Nothing matching that found." );
@@ -35,9 +44,18 @@ function send( slack, name, message ) {
 	}
 }
 
+var nullReturn = {
+	send: function( params ) {},
+	tell: function( params ) {}
+};
+
 module.exports = function( token ) {
-	token = token || "xoxb-19806943751-R8hWTjlcZ0tbn2qnDUIbg82J";
-	var slack = new Client( token, true, true );
+	token = 'abc'
+	if ( !token ) { //short circut if Slack is un-configured
+		console.warn( "Warning! Slack is not configured and no messages will be sent." );
+		return nullReturn;
+	}
+	var slack = new Client( token, false, true );
 
 	slack.on( "open", onConnected );
 	slack.on( "message", onMessage );
