@@ -1,4 +1,4 @@
-FROM mhart/alpine-node:6.2.0
+FROM mhart/alpine-node:5
 MAINTAINER Alex Robson <asrobson@gmail.com>
 
 RUN apk add --update bash
