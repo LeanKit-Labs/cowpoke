@@ -16,11 +16,16 @@ function onError( err ) {
 	return [];
 }
 
-const find = ( data, valueToFind ) => {
-	var arrayFound = data.filter( function( item ) {
-		return item.name.toLowerCase() === valueToFind.toLowerCase();
-	} );
-	return arrayFound.length !== 0;
+const find = ( data, valueToFind, foundToken ) => {
+	for ( var element of data ) {
+		if ( foundToken.found ) {
+			break;
+		} else if ( element.name.toLowerCase() === valueToFind.toLowerCase() ) {
+			foundToken.found = true;
+			return true;
+		}
+	}
+	return false;
 };
 
 function findParallel( data, valueToFind, chunkSize ) {
@@ -36,7 +41,14 @@ function findParallel( data, valueToFind, chunkSize ) {
 		chunkStart = chunkStart + chunkSize;
 		chunkEnd = chunkEnd + chunkSize;
 	}
-	return parallel( tasks, valueToFind ).then( results => results[0] );
+	return parallel( tasks, valueToFind, { found: false } ).then( results => {
+		for ( var res of results ) {
+			if ( res ) {
+				return true;
+			}
+		}
+		return false;
+	} );
 }
 
 function listTags( namesapce, name ) {
