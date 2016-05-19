@@ -32,7 +32,7 @@ var response = [
 var lotsOfTags = [
 	{
 		layer: "88f5d1c8",
-		name: tagToCheck
+		name: "tag0"
 	},
 	{
 		layer: "88f5d1c8",
@@ -80,7 +80,7 @@ var lotsOfTags = [
 	},
 		{
 		layer: "88f5d1c8",
-		name: "tag13"
+		name: tagToCheck
 	},
 	{
 		layer: "88f5d1c8",
