@@ -1,6 +1,10 @@
 var rp = require( "request-promise" );
 var urlencode = require( "urlencode" );
 var when = require( "when" );
+var util = require( "./util" );
+var format = require( "util" ).format;
+
+var uri = "https://registry.hub.docker.com/v1/repositories/%s/%s/tags";
 
 function onRequest( body ) {
 	return body;
@@ -13,7 +17,7 @@ function onError( err ) {
 
 function listTags( namesapce, name ) {
 	var options = {
-		uri: "https://registry.hub.docker.com/v1/repositories/" + urlencode( namesapce ) + "/" + urlencode( name ) + "/tags",
+		uri: format( uri, urlencode( namesapce ), urlencode( name ) ),
 		json: true,
 		headers: {
 			Authorization: "Basic " + new Buffer( process.env.DOCKER_USER + ":" + process.env.DOCKER_PASS ).toString( "base64" )
@@ -22,16 +26,16 @@ function listTags( namesapce, name ) {
 	return rp( options ).then( onRequest ).catch( onError );
 }
 
-function checkExistance( namesapce, name, tag ) {
-	return listTags( namesapce, name ).then( function( tags ) {
+function checkExistance( image ) {
+	var info = util.getImageInfo( image );
+	return listTags( info.docker.repo, info.docker.image ).then( function( tags ) {
 		var arrayFound = tags.filter( function( item ) {
-			return item.name == tag;
+			return item.name.toLowerCase() === info.docker.tag.toLowerCase();
 		} );
 		return arrayFound.length !== 0;
 	} );
 }
 
 module.exports = {
-	checkExistance: checkExistance,
-	listTags: listTags
+	checkExistance: checkExistance
 };

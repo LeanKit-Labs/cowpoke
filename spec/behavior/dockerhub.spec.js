@@ -8,8 +8,8 @@ var dockerhub = require( "../../src/dockerhub" );
 var namesapce = "leankit";
 var name = "cowpoke";
 var tagToCheck = "tag1";
-var DNEtag = "DNE";
-
+var validImage = namesapce + "/" + name + ":" + tagToCheck;
+var invalidImage = namesapce + "/" + name + ":DNE";
 var response = [
 	{
 		layer: "88f5d1c8",
@@ -31,20 +31,6 @@ var response = [
 
 describe( "Docker Hub API", function() {
 	var dockerapi;
-
-	describe( "List Tags", function() {
-		before( function() {
-			dockerapi = nock( "https://registry.hub.docker.com" );
-			dockerapi.get( "/v1/repositories/" + urlencode( namesapce ) + "/" + urlencode( name ) + "/tags" ).reply( 200, response );
-		} );
-		it( "should get all of the tags", function() {
-			function check( res ) {
-				return res.should.deep.equal( response );
-			}
-			return dockerhub.listTags( namesapce, name ).then( check );
-		} );
-	} );
-
 	describe( "Check for an image?", function() {
 		describe( "Image exists", function() {
 			before( function() {
@@ -55,7 +41,7 @@ describe( "Docker Hub API", function() {
 				function check( res ) {
 					return res.should.equal( true );
 				}
-				return dockerhub.checkExistance( namesapce, name, tagToCheck ).then( check );
+				return dockerhub.checkExistance( validImage ).then( check );
 			} );
 		} );
 
@@ -68,7 +54,7 @@ describe( "Docker Hub API", function() {
 				function check( res ) {
 					return res.should.equal( false );
 				}
-				return dockerhub.checkExistance( namesapce, name, DNEtag ).then( check );
+				return dockerhub.checkExistance( invalidImage ).then( check );
 			} );
 		} );
 	} );
