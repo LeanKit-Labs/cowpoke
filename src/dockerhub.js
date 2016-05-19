@@ -16,34 +16,34 @@ function onError( err ) {
 	return [];
 }
 
-const find = ( data, valueToFind, foundToken ) => {
-	for ( var element of data ) {
+function find ( data, valueToFind, foundToken ) {
+	for ( var element in data ) {
 		if ( foundToken.found ) {
 			break;
-		} else if ( element.name.toLowerCase() === valueToFind.toLowerCase() ) {
+		} else if ( data[element].name.toLowerCase() === valueToFind.toLowerCase() ) {
 			foundToken.found = true;
 			return true;
 		}
 	}
 	return false;
-};
+}
 
 function findParallel( data, valueToFind, chunkSize ) {
-	const numTasks = ( data.length / chunkSize );
-	const tasks = [];
+	var numTasks = ( data.length / chunkSize );
+	var tasks = [];
 
-	let chunkStart = 0;
-	let chunkEnd = chunkSize;
+	var chunkStart = 0;
+	var chunkEnd = chunkSize;
 
-	for ( let i = 0; i < numTasks; i++ ) {
-		let chunk = data.slice( chunkStart, chunkEnd );
+	for ( var i = 0; i < numTasks; i++ ) {
+		var chunk = data.slice( chunkStart, chunkEnd );
 		tasks.push( find.bind( null, chunk ) );
 		chunkStart = chunkStart + chunkSize;
 		chunkEnd = chunkEnd + chunkSize;
 	}
-	return parallel( tasks, valueToFind, { found: false } ).then( results => {
-		for ( var res of results ) {
-			if ( res ) {
+	return parallel( tasks, valueToFind, { found: false } ).then( function( results ) {
+		for ( var res in results ) {
+			if ( results[res] ) {
 				return true;
 			}
 		}
