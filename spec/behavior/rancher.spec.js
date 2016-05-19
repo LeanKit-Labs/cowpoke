@@ -267,7 +267,7 @@ describe( "Rancher API", function() {
 					} );
 				} );
 
-				describe( "when upgrading comaptible service with newer version", function() {
+				describe( "when upgrading compatible service with newer version", function() {
 					var updated;
 					before( function() {
 						var clone = _.cloneDeep( services[ "Service 02" ] );
@@ -328,7 +328,7 @@ describe( "Rancher API", function() {
 					} );
 				} );
 
-				describe( "when upgrading comaptible service with same/older version", function() {
+				describe( "when upgrading compatible service with same/older version", function() {
 					var updated;
 					before( function() {
 						var clone = _.cloneDeep( services[ "Service 02" ] );
@@ -392,7 +392,7 @@ describe( "Rancher API", function() {
 					} );
 				} );
 
-				describe( "when upgrading incomaptible service with newer version", function() {
+				describe( "when upgrading incompatible service with newer version", function() {
 					var updated;
 					before( function() {
 						var clone = _.cloneDeep( services[ "Service 02" ] );
