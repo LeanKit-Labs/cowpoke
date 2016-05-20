@@ -68,7 +68,7 @@ __Response__
 }
 ```
 
-### Get Environment - Not yet implemented
+### Get Environment - Not yet Implemented
 
 #### `GET /api/environment/{name}`
 
