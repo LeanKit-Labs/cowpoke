@@ -46,6 +46,17 @@ function rancherMock( arg, arg2 ) {
 	return promisGenerator.promise;
 }
 
+var dockerMock = {
+	checkExistance: function( params ) {
+		return Promise.resolve( true );
+	}
+};
+var dockerMockDeny = {
+	checkExistance: function( params ) {
+		return Promise.resolve( false );
+	}
+};
+
 function getAllEnvMock() {
 	var promisGen = when.defer();
 	promisGen.resolve( [ {
@@ -193,9 +204,27 @@ describe( "Upgrade", function() {
 
 		var integration = proxyquire( "../../resource/environment/integration.js", {
 			"../../src/rancher": rancherMock,
-			"../../src/data/nedb/environment": envMock
+			"../../src/data/nedb/environment": envMock,
+			"../../src/dockerhub": dockerMock
 		} );
 		integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
+	} );
+	it( "When tag is not found service should return 404", function() {
+		var integration = proxyquire( "../../resource/environment/integration.js", {
+			"../../src/rancher": rancherMock,
+			"../../src/data/nedb/environment": envMock,
+			"../../src/dockerhub": dockerMockDeny
+		} );
+		var expectedReturn = {
+			data: {
+				message: "Image does not exist in Dockerhub"
+			},
+			status: 404
+		};
+		function testResults( result ) {
+			return result.should.deep.equal( expectedReturn );
+		}
+		return integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
 	} );
 	it( "should call out to slack", function( done ) {
 		var slackMockTest = {
@@ -209,7 +238,8 @@ describe( "Upgrade", function() {
 		};
 		var integration = proxyquire( "../../resource/environment/integration.js", {
 			"../../src/rancher": rancherMock,
-			"../../src/data/nedb/environment": envMock
+			"../../src/data/nedb/environment": envMock,
+			"../../src/dockerhub": dockerMock
 		} );
 		integration.upgrade( slackMockTest, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } );
 	} );
