@@ -213,7 +213,6 @@ function configure( envelope ) {
 
 function upgrade( slack, envelope ) {
 	var image = envelope.data.image;
-<<<<<<< 027d64023b0ccc9485092bf3e975e141804b36ea
 	if ( !util.checkInfo( util.getImageInfo( image ) ) ) { //check tag if tag is formated correctly
 		return {
 			status: 400,
@@ -222,13 +221,15 @@ function upgrade( slack, envelope ) {
 			}
 		};
 	}
-	var parsedPhase1 = image.split( ":" );
-	var parsed = parsedPhase1[0].split( "/" );
-	return dockerhub.checkExistance( parsed[0], parsed[1], parsedPhase1[1] ).then( function( tagExsits ) {
-=======
 	return dockerhub.checkExistance( image ).then( function( tagExsits ) {
->>>>>>> Amended PR.
-		if ( tagExsits ) {
+		if ( tagExsits === undefined ) {
+			return Promise.resolve( {
+				data: {
+					message: "Validation with Dockerhub failed."
+				},
+				status: 500
+			} );
+		} else if ( tagExsits ) {
 			return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
 		} else {
 			return Promise.resolve( {

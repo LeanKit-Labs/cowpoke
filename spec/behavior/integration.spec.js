@@ -60,6 +60,11 @@ var dockerMockDeny = {
 		return Promise.resolve( false );
 	}
 };
+var dockerMockError = {
+	checkExistance: function( params ) {
+		return Promise.resolve( undefined );
+	}
+};
 
 function getAllEnvMock() {
 	var promisGen = when.defer();
@@ -214,7 +219,7 @@ describe( "Upgrade", function() {
 		} );
 		integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
 	} );
-	it( "When tag is not found service should return 404", function() {
+	it( "when tag is not found service should return 404", function() {
 		var integration = proxyquire( "../../resource/environment/integration.js", {
 			"../../src/rancher": rancherMock,
 			"../../src/data/nedb/environment": envMock,
@@ -225,6 +230,23 @@ describe( "Upgrade", function() {
 				message: "Image does not exist in Dockerhub"
 			},
 			status: 404
+		};
+		function testResults( result ) {
+			return result.should.deep.equal( expectedReturn );
+		}
+		return integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
+	} );
+	it( "when dockerhub validation fails should return a 500", function() {
+		var integration = proxyquire( "../../resource/environment/integration.js", {
+			"../../src/rancher": rancherMock,
+			"../../src/data/nedb/environment": envMock,
+			"../../src/dockerhub": dockerMockError
+		} );
+		var expectedReturn = {
+			data: {
+				message: "Validation with Dockerhub failed."
+			},
+			status: 500
 		};
 		function testResults( result ) {
 			return result.should.deep.equal( expectedReturn );

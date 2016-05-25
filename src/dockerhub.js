@@ -12,8 +12,8 @@ function onRequest( body ) {
 }
 
 function onError( err ) {
-	console.error( "There was an error checking a tags existance on docker hub, ", err );
-	return [];
+	console.error( "There was an error checking a tags existance on docker hub. Request Error: ", err.message );
+	return undefined;
 }
 
 function find ( data, valueToFind, foundToken ) {
@@ -59,19 +59,23 @@ function listTags( namesapce, name ) {
 			Authorization: "Basic " + new Buffer( process.env.DOCKER_USER + ":" + process.env.DOCKER_PASS ).toString( "base64" )
 		}
 	};
-	return rp( options ).then( onRequest ).catch( onError );
+	return rp( options ).then( onRequest, onError ).catch( onError );
 }
 
 function checkExistance( image ) {
 	var info = util.getImageInfo( image );
 	return listTags( info.docker.repo, info.docker.image ).then( function( tags ) {
-		if ( tags.length >= 16 ) {
-			return findParallel( tags, info.docker.tag, Math.ceil( tags.length / 16 ) );
+		if ( tags ) {
+			if ( tags.length >= 16 ) {
+				return findParallel( tags, info.docker.tag, Math.ceil( tags.length / 16 ) );
+			} else {
+				var arrayFound = tags.filter( function( item ) {
+					return item.name.toLowerCase() === info.docker.tag.toLowerCase();
+				} );
+				return arrayFound.length !== 0;
+			}
 		} else {
-			var arrayFound = tags.filter( function( item ) {
-				return item.name.toLowerCase() === info.docker.tag.toLowerCase();
-			} );
-			return arrayFound.length !== 0;
+			return undefined;
 		}
 	} );
 }
