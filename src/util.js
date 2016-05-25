@@ -32,30 +32,41 @@ function getImageInfo( image ) {
 	//Now the branch must be whatever is left
 	var branch = remainingTag;
 
-	return {
-		newImage: image,
-		docker: {
-			image: dockerImage,
-			repo: dockerRepo,
-			tag: tag
-		},
-		owner: owner,
-		repository: repo,
-		branch: branch,
-		version: version,
-		build: build,
-		commit: commit
-	};
+	var vaild = ( owner !== "" ) &&
+			( repo !== "" ) &&
+			( branch !== "" ) &&
+			( version !== "" ) &&
+			( build !== "" ) &&
+			( commit !== "" ) &&
+			( semver.valid( version ) );
+	if ( vaild ) {
+		return {
+			newImage: image,
+			docker: {
+				image: dockerImage,
+				repo: dockerRepo,
+				tag: tag
+			},
+			owner: owner,
+			repository: repo,
+			branch: branch,
+			version: version,
+			build: build,
+			commit: commit
+		};
+	} else {
+		return null;
+	}
 }
 
 function shouldUpgrade( service, newInfo ) {
 	var info = service.buildInfo;
-	var version = _.filter( [ info.version, info.build ] ).join( "-" );
-	var newVersion = _.filter( [ newInfo.version, newInfo.build ] ).join( "-" );
-	var valid = ( info.owner !== "" ) && ( info.repository !== "" ) && ( info.branch !== "" ) && ( info.version !== "" ) && ( info.build !== "" ) && ( info.commit !== "" );
-	if ( !valid ) { //short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
+	if ( !info ) {
+		//short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
 		return false;
 	}
+	var version = _.filter( [ info.version, info.build ] ).join( "-" );
+	var newVersion = _.filter( [ newInfo.version, newInfo.build ] ).join( "-" );
 	var compatible = info.owner === newInfo.owner &&
 						info.repository === newInfo.repository &&
 						info.branch === newInfo.branch;
