@@ -205,7 +205,14 @@ function configure( envelope ) {
 function upgrade( slack, envelope ) {
 	var image = envelope.data.image;
 	return dockerhub.checkExistance( image ).then( function( tagExsits ) {
-		if ( tagExsits ) {
+		if ( tagExsits === undefined ) {
+			return Promise.resolve( {
+				data: {
+					message: "Validation with Dockerhub failed."
+				},
+				status: 500
+			} );
+		} else if ( tagExsits ) {
 			return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
 		} else {
 			return Promise.resolve( {
