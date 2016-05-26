@@ -23,13 +23,8 @@ function sendError( slack, channels, env, service ) {
 function onServiceList( env, channels, slack, services ) {
 	_.each( services, function( service ) {
 			if ( pendingUpgrade[ service.id ] && service.state === "upgraded" ) {
-				var message = format( "The service %s in environment %s has upgraded successfully, amigo. Finalizing upgrade now.",
-					service.name, env.name );
-				_.each( channels, function( channel ) {
-					slack.send( channel, message );
-				} );
 				delete pendingUpgrade[ service.id ];
-				service.finish().then( onFinish.bind( null, slack, channels, env ), console.error );
+				service.finish().then( onFinish.bind( null, slack, channels, env ), sendError.bind( null, slack, channels, env, service ) );
 			}
 		} );
 }
