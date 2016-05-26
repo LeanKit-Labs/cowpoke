@@ -8,15 +8,23 @@ var statusIntervals = {};
 var pendingUpgrade = {};
 var util = require( "../../src/util" );
 
+function onFinish( slack, channels, env, service ) {
+	var message = format( "The upgrade of the service %s in environment %s has been finalized.", service.name, env.name );
+	_.each( channels, function( channel ) {
+		slack.send( channel, message );
+	} );
+}
+function sendError( slack, channels, env, service ) {
+	var message = format( "The finalization of the upgrade of the service %s in environment %s has failed.", service.name, env.name );
+	_.each( channels, function( channel ) {
+		slack.send( channel, message );
+	} );
+}
 function onServiceList( env, channels, slack, services ) {
 	_.each( services, function( service ) {
 			if ( pendingUpgrade[ service.id ] && service.state === "upgraded" ) {
-				var message = format( "The service %s in environment %s has upgraded successfully, amigo.",
-					service.name, env.name );
-				_.each( channels, function( channel ) {
-					slack.send( channel, message );
-				} );
 				delete pendingUpgrade[ service.id ];
+				service.finish().then( onFinish.bind( null, slack, channels, env ), sendError.bind( null, slack, channels, env, service ) );
 			}
 		} );
 }
