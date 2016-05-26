@@ -14,7 +14,12 @@ function onFinish( slack, channels, env, service ) {
 		slack.send( channel, message );
 	} );
 }
-
+function sendError( slack, channels, env, service ) {
+	var message = format( "The finalization of the upgrade of the service %s in environment %s has failed.", service.name, env.name );
+	_.each( channels, function( channel ) {
+		slack.send( channel, message );
+	} );
+}
 function onServiceList( env, channels, slack, services ) {
 	_.each( services, function( service ) {
 			if ( pendingUpgrade[ service.id ] && service.state === "upgraded" ) {
