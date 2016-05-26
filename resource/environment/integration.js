@@ -75,7 +75,6 @@ function onCreated() {
 }
 
 function onError( err ) {
-	console.error( err );
 	return {
 		status: 500,
 		data: {
