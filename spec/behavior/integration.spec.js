@@ -2,6 +2,10 @@ require( "../setup" );
 var proxyquire = require( "proxyquire" ).callThru();
 var when = require( "when" );
 
+function finishUp() {
+	return Promise.resolve( {} );
+}
+
 function upgradeMock( arg ) {
 	var promiseGen = when.defer();
 	promiseGen.resolve( [ {
@@ -83,10 +87,7 @@ function getChannelsMock() {
 	return promisGen.promise;
 }
 
-function mockListServices() {
-	var promisGen = when.defer();
-	promisGen.resolve( [
-		{
+var service = {
 			id: "svc0102",
 			name: "Service 02",
 			environmentId: "l0l",
@@ -112,11 +113,15 @@ function mockListServices() {
 				build: "1",
 				commit: "abcdef"
 			},
+			finish: finishUp,
 			transition: {
 				error: false
 			}
-		}
-		] );
+		};
+
+function mockListServices() {
+	var promisGen = when.defer();
+	promisGen.resolve( [ service ] );
 	return promisGen.promise;
 }
 
@@ -201,8 +206,7 @@ describe( "Upgrade", function() {
 		var slackMockTest = {
 			send: function( channel, message ) {
 				channelsList.indexOf( channel ).should.not.equal( -1 );
-				message.should.equal( "Upgrading the following services to arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef, hombre: \n - Service 02" );
-				if ( channelsList.indexOf( channel ) === ( channelsList.length - 1 ) ) {
+				if ( channelsList.indexOf( channel ) === ( channelsList.length - 1 ) && message === "Upgrading the following services to arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef, hombre: \n - Service 02" ) {
 					done();
 				}
 			}
@@ -212,6 +216,20 @@ describe( "Upgrade", function() {
 			"../../src/data/nedb/environment": envMock
 		} );
 		integration.upgrade( slackMockTest, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } );
+	} );
+
+	it( "should finish the upgrade", function( done ) {
+		this.timeout( 10000 );
+		var integration = proxyquire( "../../resource/environment/integration.js", {
+			"../../src/rancher": rancherMock,
+			"../../src/data/nedb/environment": envMock
+		} );
+		service.finish = function() {
+			done();
+			service.finish = finishUp;
+			return Promise.resolve();
+		};
+		integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } );
 	} );
 } );
 
