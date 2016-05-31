@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/arobson/cowpoke#readme",
   "dependencies": {
+    "@slack/client": "^3.3.0",
     "autohost": "^0.6.0",
     "configya": "^0.2.2",
     "fount": "^0.1.0",
@@ -33,7 +34,6 @@
     "proxyquire": "^1.7.4",
     "request": "^2.67.0",
     "semver": "^5.1.0",
-    "slack-client": "^1.5.1",
     "when": "^3.7.7"
   },
   "devDependencies": {

@@ -197,6 +197,23 @@ describe( "Upgrade", function() {
 		} );
 		integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
 	} );
+
+	it( "should  return a 400 when sent and invalid image format", function() {
+		var integration = proxyquire( "../../resource/environment/integration.js", {
+			"../../src/rancher": rancherMock,
+			"../../src/data/nedb/environment": envMock
+		} );
+		function testResults( result ) {
+			 return result.should.deep.equal( {
+				status: 400,
+				data: {
+					message: "Invalid Image (nope). Expected tag to be formatted by buildgoggles."
+				}
+			} );
+		}
+		return integration.upgrade( slackMockDoNothing, { data: { image: "nope" } } ).then( testResults );
+	} );
+
 	it( "should call out to slack", function( done ) {
 		var slackMockTest = {
 			send: function( channel, message ) {
