@@ -50,7 +50,6 @@ module.exports = function( token ) {
 	} );
 
 	rtm.start();
-	
 	return {
 		send: send.bind( undefined, rtm )
 	};
