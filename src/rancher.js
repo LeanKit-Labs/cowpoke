@@ -124,7 +124,6 @@ function finishUpgrade( http, finishURL, service, environment, stack ) {
 }
 
 function parseService( service, http, environment, stack ) {
-	
 	var definition = {
 		id: service.id,
 		name: service.name,
@@ -155,7 +154,6 @@ function parseService( service, http, environment, stack ) {
 }
 
 function upgradeAll( http, environment, dockerImage ) {
-	
 	var newInfo = util.getImageInfo( dockerImage );
 
 	function onServices( list ) {
