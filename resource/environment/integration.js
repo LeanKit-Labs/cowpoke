@@ -6,7 +6,6 @@ var format = require( "util" ).format;
 var environment = require( "../../src/data/nedb/environment" );
 var statusIntervals = {};
 var pendingUpgrade = {};
-var util = require( "../../src/util" );
 
 function onFinish( slack, channels, env, service ) {
 	var message = format( "The upgrade of the service %s in environment %s has been finalized.", service.name, env.name );
@@ -48,15 +47,11 @@ function onFailure( err ) {
 	return {
 		data: {
 			message: err.message
-		},
-		status: 500
-	};
+		}, status: 500 };
 }
 
 function onSuccess( data ) {
-	return {
-		data: data
-	};
+	return { data: data };
 }
 
 function onUpdated( env ) {
@@ -214,20 +209,26 @@ function configure( envelope ) {
 
 function upgrade( slack, envelope ) {
 	var image = envelope.data.image;
-	if ( !util.getImageInfo( image ) ) { //check tag if tag is formated correctly
-		return Promise.resolve( {
-			status: 400,
-			data: {
-				message: "Invalid Image (" + image + "). Expected tag to be formatted by buildgoggles."
-			}
-		} );
-	}
 	return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
+}
+
+function getEnv( envelope ) {
+	var name = envelope.data.environment;
+	function onEnv( env ) {
+		return env || {
+			status: "404",
+			data: {
+			    message: "Environment Not Found"
+		    }
+		};
+	}
+	return environment.getByName( name ).then( onEnv );
 }
 
 module.exports = {
 	list: list,
 	create: create,
 	configure: configure,
-	upgrade: upgrade
+	upgrade: upgrade,
+	getEnv: getEnv
 };

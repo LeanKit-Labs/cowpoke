@@ -202,23 +202,6 @@ describe( "Upgrade", function() {
 		} );
 		integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
 	} );
-
-	it( "should  return a 400 when sent and invalid image format", function() {
-		var integration = proxyquire( "../../resource/environment/integration.js", {
-			"../../src/rancher": rancherMock,
-			"../../src/data/nedb/environment": envMock
-		} );
-		function testResults( result ) {
-			 return result.should.deep.equal( {
-				status: 400,
-				data: {
-					message: "Invalid Image (nope). Expected tag to be formatted by buildgoggles."
-				}
-			} );
-		}
-		return integration.upgrade( slackMockDoNothing, { data: { image: "nope" } } ).then( testResults );
-	} );
-
 	it( "should call out to slack", function( done ) {
 		var slackMockTest = {
 			send: function( channel, message ) {
@@ -311,6 +294,43 @@ describe( "List", function() {
 		}
 
 		integration.list().then( testResults );
+	} );
+} );
+
+describe( "Get an Environment", function() {
+	it( "should get a valid environment", function() {
+		var integration = proxyquire( "../../resource/environment/integration.js", {
+			"../../src/rancher": rancherMock,
+			"../../src/data/nedb/environment": envMock
+		} );
+
+		function testResults( results ) {
+			return getEnvMock().then( function( env ) {
+				return results.should.deep.equal( env );
+			} );
+		}
+		return integration.getEnv( { data: { environment: "test" } } ).then( testResults );
+	} );
+
+	it( "should return 404 when trying to get an invalid environment", function() {
+		var integration = proxyquire( "../../resource/environment/integration.js", {
+			"../../src/rancher": rancherMock,
+			"../../src/data/nedb/environment": {
+				getByName: function() {
+					return Promise.resolve( undefined );
+				}
+			}
+		} );
+
+		function testResults( results ) {
+			return results.should.deep.equal( {
+				status: "404",
+				data: {
+					message: "Environment Not Found"
+				}
+			} );
+		}
+		return integration.getEnv( { data: { environment: "DNE" } } ).then( testResults );
 	} );
 } );
 
