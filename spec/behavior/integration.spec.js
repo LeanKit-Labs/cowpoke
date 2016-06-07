@@ -297,6 +297,43 @@ describe( "List", function() {
 	} );
 } );
 
+describe( "Get an Environment", function() {
+	it( "should get a valid environment", function() {
+		var integration = proxyquire( "../../resource/environment/integration.js", {
+			"../../src/rancher": rancherMock,
+			"../../src/data/nedb/environment": envMock
+		} );
+
+		function testResults( results ) {
+			return getEnvMock().then( function( env ) {
+				return results.should.deep.equal( env );
+			} );
+		}
+		return integration.getEnv( { data: { environment: "test" } } ).then( testResults );
+	} );
+
+	it( "should return 404 when trying to get an invalid environment", function() {
+		var integration = proxyquire( "../../resource/environment/integration.js", {
+			"../../src/rancher": rancherMock,
+			"../../src/data/nedb/environment": {
+				getByName: function() {
+					return Promise.resolve( undefined );
+				}
+			}
+		} );
+
+		function testResults( results ) {
+			return results.should.deep.equal( {
+				status: "404",
+				data: {
+					message: "Environment Not Found"
+				}
+			} );
+		}
+		return integration.getEnv( { data: { environment: "DNE" } } ).then( testResults );
+	} );
+} );
+
 describe( "Create", function() {
 	it( "should create an environment", function( done ) {
 		var integration = proxyquire( "../../resource/environment/integration.js", {
