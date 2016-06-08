@@ -1,6 +1,6 @@
 {
   "name": "cowpoke",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A service to handle configurable Rancher service upgrade patterns",
   "main": "src/index.js",
   "scripts": {
