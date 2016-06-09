@@ -74,7 +74,7 @@ function listServices( http, serviceUrl, environment, stack ) {
 		var data = result.data;
 		return _.reduce( data, function( acc, service ) {
 			if ( service.type == "service" ) {
-				acc[ service.name ] = parseService( service, http, environment, stack );
+				acc[ service.id ] = parseService( service, http, environment, stack );
 			}
 			return acc;
 		}, {} );
@@ -111,6 +111,18 @@ function listStacks( http, stackUrl, environment ) {
 		.then( onList, onError );
 }
 
+function finishUpgrade( http, finishURL, service, environment, stack ) {
+	function onList( result ) {
+		return parseService( result, http, environment, stack );
+	}
+
+	function onError( error ) {
+		return error;
+	}
+
+	return http.post( finishURL, {} ).then( onList, onError );
+}
+
 function parseService( service, http, environment, stack ) {
 	var definition = {
 		id: service.id,
@@ -135,34 +147,14 @@ function parseService( service, http, environment, stack ) {
 		};
 	}
 	definition.upgrade = upgradeService.bind( null, http, service.actions.upgrade, definition, environment, stack );
+	if ( service.actions.finishupgrade ) {
+		definition.finish = finishUpgrade.bind( null, http, service.actions.finishupgrade, definition, environment, stack );
+	}
 	return definition;
 }
 
 function upgradeAll( http, environment, dockerImage ) {
 	var newInfo = util.getImageInfo( dockerImage );
-
-	function onStackServices( stackServices ) {
-		var allservices = [];
-		for ( var i = 0; i < stackServices.length; i++ ) {
-			for ( var key in stackServices[i] ) {
-				if ( stackServices[i].hasOwnProperty( key ) ) {
-					allservices.push( stackServices[i][key] );
-				}
-			}
-		}
-		return onServices( allservices );
-	}
-
-	function onStacks( stacks ) {
-		var promises = [];
-		for ( var key in stacks ) {
-			if ( stacks.hasOwnProperty( key ) ) {
-				promises.push( stacks[key].listServices() );
-			}
-		}
-
-		return when.all( promises );
-	}
 
 	function onServices( list ) {
 		return _.filter( list, function( service ) {
@@ -188,9 +180,8 @@ function upgradeAll( http, environment, dockerImage ) {
 		}
 	}
 
-	return environment.listStacks()
-        .then( onStacks, onStacksError )
-        .then( onStackServices, onServiceError )
+	return environment.listServices()
+        .then( onServices, onServiceError )
         .then( upgradeAffectedServices );
 }
 
