@@ -212,23 +212,9 @@ function upgrade( slack, envelope ) {
 	return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
 }
 
-function getEnv( envelope ) {
-	var name = envelope.data.environment;
-	function onEnv( env ) {
-		return env || {
-			status: "404",
-			data: {
-			    message: "Environment Not Found"
-		    }
-		};
-	}
-	return environment.getByName( name ).then( onEnv );
-}
-
 module.exports = {
 	list: list,
 	create: create,
 	configure: configure,
-	upgrade: upgrade,
-	getEnv: getEnv
+	upgrade: upgrade
 };

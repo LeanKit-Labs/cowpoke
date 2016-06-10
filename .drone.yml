@@ -21,4 +21,4 @@ publish:
     repo: leankit/cowpoke
     storage_driver: overlay
     when:
-      branch: master
+      branch: poc
