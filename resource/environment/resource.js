@@ -24,11 +24,6 @@ module.exports = function( host, environment, slack ) {
 				method: "GET",
 				handle: integration.list
 			},
-			getEnv: {
-				url: "/:environment",
-				method: "GET",
-				handle: integration.getEnv
-			},
 			create: {
 				url: "/",
 				method: "POST",
