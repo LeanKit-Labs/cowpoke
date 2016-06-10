@@ -1,6 +1,6 @@
 debug: true
 build:
-  image: "node:5"
+  image: "node:6"
   commands:
     - "npm install buildgoggles@0.2.0-3"
     - "npm test"
