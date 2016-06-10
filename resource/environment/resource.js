@@ -34,6 +34,11 @@ module.exports = function( host, environment, slack ) {
 				method: "PATCH",
 				handle: integration.configure
 			},
+			getEnv: {
+				url: "/:environment",
+				method: "GET",
+				handle: integration.getEnv
+			},
 			upgrade: {
 				url: "/:image",
 				method: "PUT",
