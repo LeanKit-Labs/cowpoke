@@ -219,7 +219,7 @@ function getEnv( envelope ) {
 			status: "404",
 			data: {
 			    message: "Environment Not Found"
-		    }
+			}
 		};
 	}
 	return environment.getByName( name ).then( onEnv );
