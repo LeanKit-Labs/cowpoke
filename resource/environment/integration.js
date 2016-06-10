@@ -229,5 +229,6 @@ module.exports = {
 	list: list,
 	create: create,
 	configure: configure,
-	upgrade: upgrade
+	upgrade: upgrade,
+	getEnv: getEnv
 };
