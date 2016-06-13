@@ -212,7 +212,7 @@ function upgrade( slack, envelope ) {
 	var image = envelope.data.image;
 	if ( !util.checkInfo( util.getImageInfo( image ) ) ) { //check tag if tag is formated correctly
 		return {
-			status: 500,
+			status: 400,
 			data: {
 				message: "Invalid Image (" + image + "). Expected tag to be formatted by buildgoggles."
 			}
