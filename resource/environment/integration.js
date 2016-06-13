@@ -207,13 +207,12 @@ function create( envelope ) {
 function configure( envelope ) {
 	var data = envelope.data;
 	var name = data.environment;
-
 	return environment.getByName( name ).then( onEnvironment.bind( null, data ), onError );
 }
 
 function upgrade( slack, envelope ) {
 	var image = envelope.data.image;
-	if ( !util.checkInfo( util.getImageInfo( image ) ) ) { //check tag if tag is formated correctly
+	if ( !util.getImageInfo( image ) ) { //check tag if tag is formated correctly
 		return {
 			status: 400,
 			data: {
