@@ -1,65 +1,56 @@
-var Client = require( "slack-client" );
+var RtmClient = require( "@slack/client" ).RtmClient;
+var CLIENT_EVENTS = require( "@slack/client" ).CLIENT_EVENTS;
+var RTM_EVENTS = require( "@slack/client" ).RTM_EVENTS;
+var RTM_CLIENT_EVENTS = require( "@slack/client" ).CLIENT_EVENTS.RTM;
+var MemoryDataStore = require( "@slack/client" ).MemoryDataStore;
 
-function onConnected() {
-	console.log( "Connected to slack" );
+function send( rtm, name, message ) {
+	var id = rtm.dataStore.getChannelByName( name ).id;
+	rtm.sendMessage( message, id, function( err ) {
+		if ( err ) {
+			console.error( err );
+		}
+	} );
 }
-
-function onError( err ) {
-	console.error( "Slack error: ", err );
-}
-
-function onMessage( message ) {
-	//console.log( "Got message: ", message.text );
-}
-
-function tell( slack, target, message ) {
-	if ( !slack.authenticated ) { //escape if bad auth
-		return;
-	}
-	var dm = slack.getDMByName( target );
-	if ( !dm ) {
-		var user = slack.getUserByName( target );
-		slack.openDM( user.id, function() {
-			var dm = slack.getDMByName( target );
-			dm.send( message );
-		} );
-	} else {
-		dm.send( message );
-	}
-}
-
-function send( slack, name, message ) {
-	if ( !slack.authenticated ) { //escape if bad auth
-		return;
-	}
-	var target = slack.getChannelGroupOrDMByName( name );
-	if ( !target ) {
-		console.error( "Can't tell", name, "anything. Nothing matching that found." );
-	} else {
-		target.send( message );
-	}
-}
-
-var nullReturn = {
-	send: function( params ) {},
-	tell: function( params ) {}
-};
 
 module.exports = function( token ) {
-	if ( !token ) { //short circut if Slack is un-configured
-		console.warn( "Warning! Slack is not configured and no messages will be sent." );
-		return nullReturn;
+	if ( !token ) {
+		console.warn( "Slack is not configured. No Messages will be sent" );
+		return {
+			send: function() {}
+		};
 	}
-	var slack = new Client( token, false, true );
 
-	slack.on( "open", onConnected );
-	slack.on( "message", onMessage );
-	slack.on( "error", onError );
+	var rtm = new RtmClient( token, {
+		// Sets the level of logging we require
+		logLevel: "warn",
+		// Initialise a data store for our client, this will load additional helper functions for the storing and retrieval of data
+		dataStore: new MemoryDataStore(),
+		// Boolean indicating whether Slack should automatically reconnect after an error response
+		autoReconnect: false,
+		// Boolean indicating whether each message should be marked as read or not after it is processed
+		autoMark: true
+	} );
 
-	slack.login();
+	rtm.on( CLIENT_EVENTS.RTM.AUTHENTICATED, function( rtmStartData ) {
+		console.log( "Logged in as " + rtmStartData.self.name + " of team " + rtmStartData.team.name + ", but not yet connected to a channel" );
+	} );
+	rtm.on( CLIENT_EVENTS.RTM.DISCONNECT, function( data ) {
+		console.warn( "Disconnected from slack" );
+		rtm.reconnect();
+	} );
+	rtm.on( CLIENT_EVENTS.RTM.ATTEMPTING_RECONNECT, function( data ) {
+		console.warn( "Attempting reconnect to slack" );
+	} );
+	rtm.on( CLIENT_EVENTS.RTM.WS_ERROR, function( data ) {
+		console.error( "Slack Error" );
+	} );
+	rtm.on( CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function( data ) {
+		console.log( "Ready to send messages" );
+	} );
 
+	rtm.start();
 	return {
-		send: send.bind( undefined, slack ),
-		tell: tell.bind( undefined, slack )
+		send: send.bind( undefined, rtm )
 	};
 };
