@@ -4,6 +4,7 @@ var when = require( "when" );
 var rancherFn = require( "../../src/rancher" );
 var format = require( "util" ).format;
 var environment = require( "../../src/data/nedb/environment" );
+var util = require( "../../src/util" );
 var statusIntervals = {};
 var pendingUpgrade = {};
 
@@ -209,6 +210,14 @@ function configure( envelope ) {
 
 function upgrade( slack, envelope ) {
 	var image = envelope.data.image;
+	if ( !util.checkInfo( util.getImageInfo( image ) ) ) { //check tag if tag is formated correctly
+		return {
+			status: 500,
+			data: {
+				message: "Invalid Image (" + image + "). Expected tag to be formatted by buildgoggles."
+			}
+		};
+	}
 	return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
 }
 
