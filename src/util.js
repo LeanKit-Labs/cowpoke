@@ -1,7 +1,6 @@
 var _ = require( "lodash" );
 var semver = require( "semver" );
 
-
 function getImageInfo( image ) {
 	image = image.replace( /^docker[:]/g, "" );
 	var imageParts = image.split( ":" );
@@ -34,7 +33,7 @@ function getImageInfo( image ) {
 	var branch = remainingTag;
 
 	if ( ( owner !== "" ) && ( repo !== "" ) && ( branch !== "" ) &&
-		 (version !== "" ) && ( build !== "" ) && ( commit !== "" ) &&
+		 ( version !== "" ) && ( build !== "" ) && ( commit !== "" ) &&
 		 semver.valid( version ) ) {
 		return {
 			newImage: image,
@@ -71,5 +70,5 @@ function shouldUpgrade( service, newInfo ) {
 
 module.exports = {
 	getImageInfo: getImageInfo,
-	shouldUpgrade: shouldUpgrade,
+	shouldUpgrade: shouldUpgrade
 };

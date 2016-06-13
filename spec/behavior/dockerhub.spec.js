@@ -3,12 +3,34 @@ var proxyquire = require( "proxyquire" ).callThru();
 var when = require( "when" );
 var nock = require( "nock" );
 var urlencode = require( "urlencode" );
-var dockerhub = require( "../../src/dockerhub" );
 
 var namesapce = "leankit";
 var name = "cowpoke";
 var tagToCheck = "tag1";
 var validImage = namesapce + "/" + name + ":" + tagToCheck;
+var dockerhub = proxyquire( "../../src/dockerhub", {
+	"./util": {
+		getImageInfo: function( image ) {
+			if ( image === validImage ) {
+				return {
+					docker: {
+						repo: namesapce,
+						image: name,
+						tag: tagToCheck
+					}
+				};
+			} else {
+				return {
+					docker: {
+						repo: namesapce,
+						image: name,
+						tag: "DNE"
+					}
+				};
+			}
+		}
+	}
+} );
 var invalidImage = namesapce + "/" + name + ":DNE";
 var response = [
 	{
