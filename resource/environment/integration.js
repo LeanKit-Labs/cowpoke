@@ -226,7 +226,7 @@ function upgrade( slack, envelope ) {
 				data: {
 					message: "Validation with Dockerhub failed."
 				},
-				status: 500
+				status: 401
 			} );
 		} else if ( tagExsits ) {
 			return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
