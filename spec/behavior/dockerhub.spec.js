@@ -1,6 +1,5 @@
 require( "../setup" );
 var proxyquire = require( "proxyquire" ).callThru();
-var when = require( "when" );
 var nock = require( "nock" );
 var urlencode = require( "urlencode" );
 
@@ -68,7 +67,7 @@ var lotsOfTags = [
 		layer: "88f5d1c8",
 		name: "tag4"
 	},
-		{
+	{
 		layer: "88f5d1c8",
 		name: "tag5"
 	},
@@ -84,7 +83,7 @@ var lotsOfTags = [
 		layer: "88f5d1c8",
 		name: "tag8"
 	},
-		{
+	{
 		layer: "88f5d1c8",
 		name: "tag9"
 	},
@@ -100,7 +99,7 @@ var lotsOfTags = [
 		layer: "88f5d1c8",
 		name: "tag12"
 	},
-		{
+	{
 		layer: "88f5d1c8",
 		name: tagToCheck
 	},
@@ -116,7 +115,7 @@ var lotsOfTags = [
 		layer: "88f5d1c8",
 		name: "tag16"
 	},
-		{
+	{
 		layer: "88f5d1c8",
 		name: "tag17"
 	},

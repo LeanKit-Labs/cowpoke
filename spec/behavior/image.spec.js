@@ -1,6 +1,6 @@
 require( "../setup" );
 var imageFn = require( "../../src/model/image" );
-
+/* global _, sinon  */
 describe( "Behavior Model", function() {
 	var store, rancher;
 	before( function() {
@@ -46,7 +46,7 @@ describe( "Behavior Model", function() {
 				};
 				storeMock.service.expects( "findUpgradableServices" )
 					.withArgs( info )
-					.resolves( { info: info, services: services } );
+					.resolves( {info: info, services: services} );
 
 				rancherMock = sinon.mock( rancher );
 				rancherMock.expects( "upgrade" )

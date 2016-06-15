@@ -1,49 +1,10 @@
-
-var _ = require( "lodash" );
-var when = require( "when" );
-var rancherFn = require( "../../src/rancher" );
-var format = require( "util" ).format;
-var environment = require( "../../src/data/nedb/environment" );
-var util = require( "../../src/util" );
-var dockerhub = require( "../../src/dockerhub" );
-var statusIntervals = {};
-var pendingUpgrade = {};
-
-function onFinish( slack, channels, env, service ) {
-	var message = format( "The upgrade of the service %s in environment %s has been finalized.", service.name, env.name );
-	_.each( channels, function( channel ) {
-		slack.send( channel, message );
-	} );
-}
-function sendError( slack, channels, env, service ) {
-	var message = format( "The finalization of the upgrade of the service %s in environment %s has failed.", service.name, env.name );
-	_.each( channels, function( channel ) {
-		slack.send( channel, message );
-	} );
-}
-function onServiceList( env, channels, slack, services ) {
-	_.each( services, function( service ) {
-			if ( pendingUpgrade[ service.id ] && service.state === "upgraded" ) {
-				delete pendingUpgrade[ service.id ];
-				service.finish().then( onFinish.bind( null, slack, channels, env ), sendError.bind( null, slack, channels, env, service ) );
-			}
-		} );
-}
-
-function checkStatus( env, slack, channels ) {
-	env.listServices().then( onServiceList.bind( null, env, channels, slack ) );
-}
-
-function createServiceChecks( env, slack, services, channels ) {
-	_.each( services, function( service ) {
-		if ( !statusIntervals[ service.environmentId ] ) {
-			statusIntervals = setInterval( checkStatus.bind( null, env, slack, channels ), 5000 );
-		}
-		if ( !pendingUpgrade[ service.id ] ) {
-			pendingUpgrade[ service.id ] = true;
-		}
-	} );
-}
+const dockerhub = require( "../../src/dockerhub" );
+const _ = require( "lodash" );
+const Promise = require("bluebird");
+const rancherFn = require( "../../src/rancher" );
+const format = require( "util" ).format;
+const environment = require( "../../src/data/nedb/environment" );
+const util = require( "../../src/util" );
 
 function onFailure( err ) {
 	return {
@@ -54,38 +15,43 @@ function onFailure( err ) {
 	};
 }
 
-function onSuccess( data ) {
-	return { data: data };
+const connectionError = {
+	status: 500,
+	data: {
+		message: "Could not connect to Rancher instance."
+	}
+};
+
+function list() {
+	return environment.getAll().then( data => ( {data} ), onFailure );
 }
 
-function onUpdated( env ) {
-	return {
-		status: 200,
-		data: env
-	};
+function create( envelope ) {
+	var data = envelope.data;
+	if ( data.name && data.baseUrl && data.key && data.secret && data.slackChannels ) {
+		return environment.add( data ).then( () => (
+			{
+				data: {
+					message: "Created"
+				}
+			}
+		), onFailure );
+	} else {
+		return {
+			data: {
+				message: "Invaild Environment"
+			}
+		};
+	}
 }
 
-function onCreated() {
-	return {
-		data: {
-			message: "Created"
-		}
-	};
-}
-
-function onError( err ) {
-	return {
-		status: 500,
-		data: {
-			message: "Failed due to server error."
-		}
-	};
-}
-
-function onEnvironment( data, env ) {
+const configurationProcess = Promise.coroutine( function* ( name, data )  {
+	//get the environment
+	const env = yield environment.getByName( name );
+	//try to change it
 	try {
 		env.slackChannels = env.slackChannels || [];
-		_.each( data, function( item ) {
+		_.each( data,  item => {
 			if ( ( item.field === "slackChannels" || item.path === "/slackChannels" ) ) {
 				if ( item.op === "add" ) {
 					env.slackChannels.push( item.value );
@@ -95,123 +61,138 @@ function onEnvironment( data, env ) {
 			}
 		} );
 		env.slackChannels = _.unique( env.slackChannels );
-		return environment.add( env ).then( onUpdated.bind( null, env ), onError );
+		return environment.add( env ).then( () => ({
+			status: 200,
+			data: env
+		}), () => ( {
+			status: 500,
+			data: {
+				message: "Failed to add environment to the database"
+			}
+		} ) );
 	} catch ( e ) {
 		return {
 			status: 400,
 			data: {
-				message: e.stack
+				message: e.message
 			}
 		};
 	}
+	
+} );
+
+function configure( envelope ) {
+	const data = envelope.data;
+	const name = data.environment;
+	return configurationProcess(name, data);
 }
 
-function onUpgradeError( name, error ) {
-	return {
-		status: 500,
-		data: {
-			error: error.stack,
-			message: "An error occurred during upgrade of environment '" + name + "'"
-		}
-	};
+function sendMessage(slack, channels, message) {
+	channels.forEach( channel => {
+		slack.send( channel, message );
+	}, this);
 }
 
-function onChannels( image, env, services, slack, channels ) {
-	if ( channels && channels.length && services && services.length ) {
-		var names = _.pluck( _.flatten( services ), "name" );
-		names[ 0 ] = "\n - " + names[ 0 ];
-		var message = format( "Upgrading the following services to %s, hombre: %s",
-		image, names.join( "\n - " ) );
-		_.each( channels, function( channel ) {
-			slack.send( channel, message );
-		} );
-		createServiceChecks( env, slack, services, channels );
+const notificationProcess = Promise.coroutine( function* ( image, environmentName, env, slack, services )  {
+	//get channels to notify	
+	let channels = yield environment.getChannels( environmentName );
+	channels = channels || [];
+	//send first notificaiton
+	const names = _.pluck( _.flatten( services ), "name" );
+	names[0] = "\n - " + names[0];
+	const message = format( "Upgrading the following services to %s, hombre: %s",
+	image, names.join( "\n - " ) );
+	sendMessage(slack, channels, message);
+	//create a object to store services in
+	const pendingUpgrade = {};
+	services.forEach( service => {
+		pendingUpgrade[service.id] = true;
+	}, this);
+	//poll rancher
+	while (!_.isEmpty(pendingUpgrade)) {
+		let currentServices = yield env.listServices();
+		currentServices.forEach( service => {
+			if ( pendingUpgrade[service.id] && service.state === "upgraded" ) {
+				service.finish().then(() => {
+					sendMessage(slack, channels, format( "The service %s in environment %s has finalized successfully, amigo", service.name, env.name ) );
+				}, () => {
+					sendMessage(slack, channels, format( "The service %s in environment %s has experienced and error and failed to finalize, amigo", service.name, env.name ) );
+				});
+				delete pendingUpgrade[service.id];
+			}
+		}, this);
+		yield Promise.delay(5000);
 	}
-}
+	return true; //end routine
 
-function onEnvironmentsLoaded( image, slack, environments ) {
-	var name = _.keys( environments )[ 0 ];
-	var env = environments[ name ];
-	return env.upgrade( image ).then( onServices.bind( null, image, name, env, slack ), onUpgradeError.bind( null, name ) );
-}
+} );
 
-function onRancher( image, slack, rancher ) {
-	return rancher.listEnvironments().then( onEnvironmentsLoaded.bind( null, image, slack ), onConnectionError );
-}
-
-function onConnectionError( error ) {
-	return {
-		status: 500,
-		data: {
-			message: "Could not connect to Rancher instance."
+const upgradeProcess = Promise.coroutine( function* ( slack, image ) {
+	
+	//Get the environments from the database
+	let environments = yield environment.getAll().catch( () => (
+		{
+			status: 404,
+			data: {
+				message: "Unable to get information from the database"
+			}
 		}
-	};
-}
-
-function onEnvironments( image, slack, environments ) {
-	var upgrades = _.map( environments, function( env ) {
-		return rancherFn( env.baseUrl, {
+	) );
+	//encase of error return it
+	if ( environments.status ) {
+		return environments;
+	}
+	
+	//Authenticate with rancher
+	let authenticatedEnvs = yield Promise.all( _.map( environments,  env => 
+		rancherFn( env.baseUrl, {
 			key: env.key,
 			secret: env.secret
-		} ).then( onRancher.bind( null, image, slack ), onConnectionError );
-	} );
-
-	return when.all( upgrades ).then( function( lists ) {
-		if ( lists.length > 0 ) {
-			return {
-				data: {
-					upgradedServices: _.flatten( lists )
-				}
-			};
-		} else {
-			return {
-				data: {
-					message: "No services were eligible for upgrading"
-				}
-			};
+		} ).catch( () => connectionError )
+	) );
+	//get the information from the api
+	let rancherEnvData = yield Promise.all( _.map( authenticatedEnvs, rancher => {
+		if (_.isEqual(rancher, connectionError)) { //check for error
+			return Promise.resolve(connectionError);
 		}
-	} );
-}
-
-function onReadError( error ) {
-	return {
-		status: 404,
-		data: {
-			message: "Unable to get information for environment '" + name + "'"
+		return rancher.listEnvironments().catch( () => connectionError );
+	} ) );
+	//upgrade the service
+	let upgrades =  _.flatten( yield Promise.all( _.map( rancherEnvData, environments => {
+		if (_.isEqual(environments, connectionError)) { //check for error
+			return Promise.resolve(environments);
 		}
-	};
-}
-
-function onServices( image, environmentName, env, slack, services ) {
-	environment.getChannels( environmentName ).then( onChannels.bind( null, image, env, services, slack ) );
-	return services;
-}
-
-function list() {
-	return environment.getAll().then( onSuccess, onFailure );
-}
-
-function create( envelope ) {
-	var data = envelope.data;
-	if ( data.name && data.baseUrl && data.key && data.secret && data.slackChannels ) {
-		return environment.add( data ).then( onCreated, onFailure );
+		const name = _.keys( environments )[0];
+		const env = environments[name];
+		return env.upgrade( image ).then( (services) => {
+			notificationProcess(image, name, env, slack, services); //start but do not await the notificaiton
+			return services;
+		}, () => ({
+			status: 500,
+			data: {
+				message: "An error occurred during upgrade of environment '" + name + "'"
+			}
+		} ) );
+	} ) ) );
+	//return the results
+	if ( upgrades.length > 0 ) {
+		return {
+			data: {
+				upgradedServices: upgrades
+			}
+		};
 	} else {
 		return {
 			data: {
-			    message: "Invaild Environment"
-		    }
+				message: "No services were eligible for upgrading"
+			}
 		};
 	}
-}
+} );
 
-function configure( envelope ) {
-	var data = envelope.data;
-	var name = data.environment;
-	return environment.getByName( name ).then( onEnvironment.bind( null, data ), onError );
-}
 
 function upgrade( slack, envelope ) {
-	var image = envelope.data.image;
+	const image = envelope.data.image;
 	if ( !util.getImageInfo( image ) ) { //check tag if tag is formated correctly
 		return {
 			status: 400,
@@ -220,7 +201,7 @@ function upgrade( slack, envelope ) {
 			}
 		};
 	}
-	return dockerhub.checkExistance( image ).then( function( tagExsits ) {
+	return dockerhub.checkExistance( image ).then( tagExsits => {
 		if ( tagExsits === undefined ) {
 			return Promise.resolve( {
 				data: {
@@ -229,7 +210,7 @@ function upgrade( slack, envelope ) {
 				status: 401
 			} );
 		} else if ( tagExsits ) {
-			return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
+			return upgradeProcess(slack, image);
 		} else {
 			return Promise.resolve( {
 				data: {
@@ -242,22 +223,21 @@ function upgrade( slack, envelope ) {
 }
 
 function getEnv( envelope ) {
-	var name = envelope.data.environment;
-	function onEnv( env ) {
+	const name = envelope.data.environment;
+	return environment.getByName( name ).then( env => {
 		return env || {
 			status: "404",
 			data: {
-			    message: "Environment Not Found"
-		    }
+				message: "Environment Not Found"
+			}
 		};
-	}
-	return environment.getByName( name ).then( onEnv );
+	} );
 }
 
 module.exports = {
-	list: list,
-	create: create,
-	configure: configure,
-	upgrade: upgrade,
-	getEnv: getEnv
+	list,
+	create,
+	configure,
+	upgrade,
+	getEnv
 };

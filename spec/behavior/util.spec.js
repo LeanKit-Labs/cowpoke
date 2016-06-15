@@ -1,6 +1,6 @@
 var util = require( "../../src/util" );
 require( "../setup" );
-
+/* global expect  */
 describe( "ShouldUpgrade", function() {
 	var imageData = util.getImageInfo( "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" );
 	var service = {

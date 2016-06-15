@@ -1,13 +1,12 @@
 var _ = require( "lodash" );
 var path = require( "path" );
-var nedb = require( "nedb" );
 var when = require( "when" );
 var nodeWhen = require( "when/node" );
 var Datastore = require( "nedb" );
 var config = require( "configya" )( {
 	nedb: {
-			path: path.join( process.cwd(), "./data" )
-		}
+		path: path.join( process.cwd(), "./data" )
+	}
 }, "./config.json" );
 
 function count( api, pattern ) {
@@ -15,7 +14,7 @@ function count( api, pattern ) {
 }
 
 function fetch( api, pattern, map, continuation ) {
-	continuation = continuation || { sort: {} };
+	continuation = continuation || {sort: {}};
 	map = map || function( x ) {
 		return x;
 	};
@@ -42,7 +41,7 @@ function fetchPage( api, pattern, map, continuation ) {
 	var promise = nodeWhen.apply( op.exec.bind( op ) );
 	return when.try( apply, promise )
 		.then( function( data ) {
-			data.continuation = { limit: limit, page: pageIndex, sort: sort };
+			data.continuation = {limit: limit, page: pageIndex, sort: sort};
 			data.continuation.page++;
 			return data;
 		} )
@@ -59,7 +58,7 @@ function insert( api, doc ) {
 }
 
 function purge( api, key, all ) {
-	return api.remove( key, { multi: all } );
+	return api.remove( key, {multi: all} );
 }
 
 function update( api, pattern, change ) {
@@ -67,7 +66,7 @@ function update( api, pattern, change ) {
 }
 
 function upsert( api, pattern, doc ) {
-	return api.update( pattern, doc, { upsert: true } );
+	return api.update( pattern, doc, {upsert: true} );
 }
 
 function wrap( db ) {
@@ -83,7 +82,7 @@ function wrap( db ) {
 
 module.exports = function( fileName ) {
 	var dbPath = path.join( config.nedb.path, fileName );
-	var store = new Datastore( { filename: dbPath, autoload: true } );
+	var store = new Datastore( {filename: dbPath, autoload: true} );
 	var api = wrap( store );
 	store.persistence.compactDatafile();
 	store.persistence.setAutocompactionInterval( 60000 );
