@@ -178,41 +178,5 @@ describe( "Rancher API", function() {
 				);
 			} );
 		} );
-
-		describe( "when fetching environment stacks", function() {
-			var stacks;
-			before( function() {
-				rancherHost
-					.get( "/v1/projects/l0l/environments" )
-					.reply( 200, {
-						data: [ {
-							id: "s01",
-							name: "Stack 1",
-							accountId: "l0l",
-							description: "A test stack",
-							state: "active",
-							links: {
-								services: baseURL + "/v1/projects/l0l/environments/s01/services"
-							}
-						} ]
-					} );
-
-				return environments.Test.listStacks()
-					.then( function( response ) {
-						stacks = response;
-					} );
-			} );
-
-			it( "should respond with Test environment's stacks", function() {
-				return stacks[ "Stack 1" ].should.partiallyEql( {
-					id: "s01",
-					name: "Stack 1",
-					environmentId: "l0l",
-					environmentName: "Test",
-					description: "A test stack",
-					state: "active"
-				} );
-			} );
-		} );
 	} );
 } );

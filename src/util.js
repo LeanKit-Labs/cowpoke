@@ -1,16 +1,6 @@
 var _ = require( "lodash" );
 var semver = require( "semver" );
 
-function checkInfo( info ) {
-	return ( info.owner !== "" ) &&
-	( info.repository !== "" ) &&
-	( info.branch !== "" ) &&
-	( info.version !== "" ) &&
-	( info.build !== "" ) &&
-	( info.commit !== "" ) &&
-	( semver.valid( info.version ) );
-}
-
 function getImageInfo( image ) {
 	image = image.replace( /^docker[:]/g, "" );
 	var imageParts = image.split( ":" );
@@ -42,25 +32,31 @@ function getImageInfo( image ) {
 	//Now the branch must be whatever is left
 	var branch = remainingTag;
 
-	return {
-		newImage: image,
-		docker: {
-			image: dockerImage,
-			repo: dockerRepo,
-			tag: tag
-		},
-		owner: owner,
-		repository: repo,
-		branch: branch,
-		version: version,
-		build: build,
-		commit: commit
-	};
+	if ( ( owner !== "" ) && ( repo !== "" ) && ( branch !== "" ) &&
+		 ( version !== "" ) && ( build !== "" ) && ( commit !== "" ) &&
+		 semver.valid( version ) ) {
+		return {
+			newImage: image,
+			docker: {
+				image: dockerImage,
+				repo: dockerRepo,
+				tag: tag
+			},
+			owner: owner,
+			repository: repo,
+			branch: branch,
+			version: version,
+			build: build,
+			commit: commit
+		};
+	} else {
+		return undefined;
+	}
 }
 
 function shouldUpgrade( service, newInfo ) {
 	var info = service.buildInfo;
-	if ( !checkInfo( info ) ) { //short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
+	if ( !info ) { //short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
 		return false;
 	}
 	var version = _.filter( [ info.version, info.build ] ).join( "-" );
@@ -74,6 +70,5 @@ function shouldUpgrade( service, newInfo ) {
 
 module.exports = {
 	getImageInfo: getImageInfo,
-	shouldUpgrade: shouldUpgrade,
-	checkInfo: checkInfo
+	shouldUpgrade: shouldUpgrade
 };

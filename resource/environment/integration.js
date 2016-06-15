@@ -5,6 +5,7 @@ var rancherFn = require( "../../src/rancher" );
 var format = require( "util" ).format;
 var environment = require( "../../src/data/nedb/environment" );
 var util = require( "../../src/util" );
+var dockerhub = require( "../../src/dockerhub" );
 var statusIntervals = {};
 var pendingUpgrade = {};
 
@@ -48,7 +49,9 @@ function onFailure( err ) {
 	return {
 		data: {
 			message: err.message
-		}, status: 500 };
+		},
+		status: 500
+	};
 }
 
 function onSuccess( data ) {
@@ -204,13 +207,12 @@ function create( envelope ) {
 function configure( envelope ) {
 	var data = envelope.data;
 	var name = data.environment;
-
 	return environment.getByName( name ).then( onEnvironment.bind( null, data ), onError );
 }
 
 function upgrade( slack, envelope ) {
 	var image = envelope.data.image;
-	if ( !util.checkInfo( util.getImageInfo( image ) ) ) { //check tag if tag is formated correctly
+	if ( !util.getImageInfo( image ) ) { //check tag if tag is formated correctly
 		return {
 			status: 400,
 			data: {
@@ -218,7 +220,25 @@ function upgrade( slack, envelope ) {
 			}
 		};
 	}
-	return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
+	return dockerhub.checkExistance( image ).then( function( tagExsits ) {
+		if ( tagExsits === undefined ) {
+			return Promise.resolve( {
+				data: {
+					message: "Validation with Dockerhub failed."
+				},
+				status: 401
+			} );
+		} else if ( tagExsits ) {
+			return environment.getAll().then( onEnvironments.bind( null, image, slack ), onReadError );
+		} else {
+			return Promise.resolve( {
+				data: {
+					message: "Image does not exist in Dockerhub"
+				},
+				status: 404
+			} );
+		}
+	} );
 }
 
 function getEnv( envelope ) {
