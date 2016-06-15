@@ -236,7 +236,7 @@ describe( "Upgrade", function() {
 		}
 		return integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
 	} );
-	it( "when dockerhub validation fails should return a 500", function() {
+	it( "when dockerhub validation fails should return a 401", function() {
 		var integration = proxyquire( "../../resource/environment/integration.js", {
 			"../../src/rancher": rancherMock,
 			"../../src/data/nedb/environment": envMock,
@@ -246,7 +246,7 @@ describe( "Upgrade", function() {
 			data: {
 				message: "Validation with Dockerhub failed."
 			},
-			status: 500
+			status: 401
 		};
 		function testResults( result ) {
 			return result.should.deep.equal( expectedReturn );
