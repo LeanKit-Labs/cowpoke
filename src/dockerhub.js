@@ -70,7 +70,7 @@ function checkExistance( image ) {
 				return findParallel( tags, info.docker.tag, Math.ceil( tags.length / 16 ) );
 			} else {
 				var arrayFound = tags.filter( function( item ) {
-					return item.name.toLowerCase() === info.docker.tag.toLowerCase();
+					return item.name === info.docker.tag;
 				} );
 				return arrayFound.length !== 0;
 			}
