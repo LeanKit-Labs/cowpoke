@@ -8,8 +8,8 @@ global.fs = require( "fs" );
 global.sinon = require( "sinon" );
 chai.use( require( "sinon-chai" ) );
 require( "sinon-as-promised" );
-// global.proxyquire = require( "proxyquire" ).noPreserveCache();
-// global.halon = require( "halon" );
+
+/* global _, when  */
 global.nock = require( "nock" );
 
 function deepCompare( a, b, k ) {
@@ -18,11 +18,13 @@ function deepCompare( a, b, k ) {
 		diffs.push( "expected " + k + " to equal " + a + " but was undefined " );
 	} else if ( _.isObject( a ) || _.isArray( a ) ) {
 		_.each( a, function( v, c ) {
-			var key = k ? [ k, c ].join( "." ) : c;
-			diffs = diffs.concat( deepCompare( a[ c ], b[ c ], key ) );
+			var key = k ? [k, c].join( "." ) : c;
+			diffs = diffs.concat( deepCompare( a[c], b[c], key ) );
 		} );
 	} else {
+		/* eslint-disable eqeqeq */
 		var equal = a == b; // jshint ignore:line
+		/* eslint-enable eqeqeq */
 		if ( !equal ) {
 			diffs.push( "expected " + k + " to equal " + a + " but got " + b );
 		}

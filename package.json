@@ -4,7 +4,7 @@
   "description": "A service to handle configurable Rancher service upgrade patterns",
   "main": "src/index.js",
   "scripts": {
-    "test": "gulp test",
+    "test": "babel-node node_modules/isparta/bin/isparta cover --report text --report html node_modules/mocha/bin/_mocha -- spec/** --reporter dot && eslint src/** spec/** resource/**",
     "run": "node src/index.js"
   },
   "repository": {
@@ -25,7 +25,12 @@
   "dependencies": {
     "@slack/client": "^3.3.0",
     "autohost": "^0.6.0",
+    "babel": "^6.5.2",
+    "babel-cli": "^6.9.0",
+    "babel-register": "^6.9.0",
+    "bluebird": "^3.4.0",
     "configya": "^0.2.2",
+    "eslint": "^2.12.0",
     "fount": "^0.1.0",
     "hyped": "^0.5.1",
     "lodash": "^3.10.1",
@@ -42,7 +47,9 @@
     "biggulp": "^0.2.2",
     "chai": "^3.4.1",
     "chai-as-promised": "^5.2.0",
+    "eslint": "^2.12.0",
     "gulp": "^3.9.0",
+    "isparta": "^4.0.0",
     "nock": "^5.2.1",
     "sinon": "^1.17.2",
     "sinon-as-promised": "^4.0.0",

@@ -1,54 +1,70 @@
-var rp = require( "request-promise" );
-var urlencode = require( "urlencode" );
-var util = require( "./util" );
-var format = require( "util" ).format;
+const rp = require( "request-promise" );
+const urlencode = require( "urlencode" );
+const parallel = require( "when/parallel" );
+const util = require( "./util" );
+const format = require( "util" ).format;
 
-var uri = "https://registry.hub.docker.com/v2/%s/%s/tags/list";
-var authUriu = "https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s/%s:pull";
+const uri = "https://registry.hub.docker.com/v1/repositories/%s/%s/tags";
 
-function onRequest( body ) {
-	return body;
+function find ( data, valueToFind, foundToken ) {
+	for ( let element in data ) {
+		if ( foundToken.found ) {
+			break;
+		} else if ( data[element].name === valueToFind) {
+			foundToken.found = true;
+			return true;
+		}
+	}
+	return false;
 }
 
-function onError( err ) {
-	console.error( "There was an error checking a tags existance on docker hub. Request Error: ", err.message );
-	return undefined;
+function findParallel( data, valueToFind, chunkSize ) {
+	const numTasks = ( data.length / chunkSize );
+	const tasks = [];
+
+	let chunkStart = 0;
+	let chunkEnd = chunkSize;
+
+	for ( let i = 0; i < numTasks; i++ ) {
+		let chunk = data.slice( chunkStart, chunkEnd );
+		tasks.push( find.bind( null, chunk ) );
+		chunkStart = chunkStart + chunkSize;
+		chunkEnd = chunkEnd + chunkSize;
+	}
+
+	return parallel( tasks, valueToFind, {found: false} ).then( results => {
+		for ( let res in results ) {
+			if ( results[res] ) {
+				return true;
+			}
+		}
+		return false;
+	} );
 }
-function auth( namesapce, name ) {
-	var options = {
-		uri: format( authUriu, urlencode( namesapce ), urlencode( name ) ),
+
+function listTags( namesapce, name ) {
+	const options = {
+		uri: format( uri, urlencode( namesapce ), urlencode( name ) ),
 		json: true,
 		headers: {
 			Authorization: "Basic " + new Buffer( process.env.DOCKER_USER + ":" + process.env.DOCKER_PASS ).toString( "base64" )
 		}
 	};
-	return rp( options ).then( function( res ) {
-		return res.token;
-	}, onError ).catch( onError );
-}
-
-function listTags( namesapce, name, token ) {
-	var options = {
-		uri: format( uri, urlencode( namesapce ), urlencode( name ) ),
-		json: true,
-		headers: {
-			Authorization: "Bearer " + token
-		}
-	};
-
-	return rp( options ).then( function( res ) {
-		return res.tags;
-	}, onError ).catch( onError );
+	return rp( options ).then( body => body, () => undefined ).catch( () => undefined );
 }
 
 function checkExistance( image ) {
-	var info = util.getImageInfo( image );
-	return auth( info.docker.repo, info.docker.image ).then( listTags.bind( null, info.docker.repo, info.docker.image ) ).then( function( tags ) {
+	const info = util.getImageInfo( image );
+	return listTags( info.docker.repo, info.docker.image ).then(  tags => {
 		if ( tags ) {
-			var arrayFound = tags.filter( function( item ) {
-				return item === info.docker.tag;
-			} );
-			return arrayFound.length !== 0;
+			if ( tags.length >= 16 ) {
+				return findParallel( tags, info.docker.tag, Math.ceil( tags.length / 16 ) );
+			} else {
+				var arrayFound = tags.filter( function( item ) {
+					return item.name === info.docker.tag;
+				} );
+				return arrayFound.length !== 0;
+			}
 		} else {
 			return undefined;
 		}
