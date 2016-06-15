@@ -20,7 +20,7 @@ function find ( data, valueToFind, foundToken ) {
 	for ( var element in data ) {
 		if ( foundToken.found ) {
 			break;
-		} else if ( data[element].name.toLowerCase() === valueToFind.toLowerCase() ) {
+		} else if ( data[element].name === valueToFind) {
 			foundToken.found = true;
 			return true;
 		}
