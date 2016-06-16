@@ -111,7 +111,7 @@ const notificationProcess = Promise.coroutine( function* ( image, environmentNam
 	//poll rancher
 	while (!_.isEmpty(pendingUpgrade)) {
 		let currentServices = yield env.listServices();
-		currentServices.forEach( service => {
+		_.forEach(currentServices, service => {
 			if ( pendingUpgrade[service.id] && service.state === "upgraded" ) {
 				service.finish().then(() => {
 					sendMessage(slack, channels, format( "The service %s in environment %s has finalized successfully, amigo", service.name, env.name ) );
