@@ -22,5 +22,4 @@ const host = hyped.createHost( autohost, {
 	session: null,
 	handleRouteErrors: true
 } );
-var IamHereToBreakThings = [ 0 ];
 host.start();
