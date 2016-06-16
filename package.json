@@ -4,7 +4,7 @@
   "description": "A service to handle configurable Rancher service upgrade patterns",
   "main": "src/index.js",
   "scripts": {
-    "test": "babel-node node_modules/isparta/bin/isparta cover --report text --report html node_modules/mocha/bin/_mocha -- spec/** --reporter dot && eslint src/** spec/** resource/**",
+    "test": "./test.sh",
     "run": "node src/index.js"
   },
   "repository": {
