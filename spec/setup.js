@@ -1,3 +1,4 @@
+require("babel-polyfill");
 global._ = require( "lodash" );
 var chai = require( "chai" );
 chai.use( require( "chai-as-promised" ) );
