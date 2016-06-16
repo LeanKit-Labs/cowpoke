@@ -1,6 +1,8 @@
 const rp = require( "request-promise" );
 const urlencode = require( "urlencode" );
 const parallel = require( "when/parallel" );
+const poll = require( "when/parallel" );
+const promise = require( "bluebird" );
 const util = require( "./util" );
 const format = require( "util" ).format;
 
@@ -42,6 +44,39 @@ function findParallel( data, valueToFind, chunkSize ) {
 	} );
 }
 
+let checkDockerProcess = promise.coroutine( function* ( namesapce, name, target ) {
+
+	//poll for 20 seconds to see if tag is found. The drone-cowpoke plugin may have 
+	//just pushed the tag and it may not have registered with docker yet	
+	let interval = 125;
+	const startDate = new Date().getTime();
+	while (new Date().getTime() - startDate <= 20000) {
+		let found = false;
+		const tags = yield listTags( namesapce, name );
+		//check to see if error
+		if (tags === undefined) {
+			return undefined;
+		}
+		if ( tags.length >= 16 ) {
+			found = yield findParallel( tags, target, Math.ceil( tags.length / 16 ) );
+		} else {
+			found = tags.filter( function( item ) {
+				return item.name === target;
+			} ).length !== 0;
+		}
+		//if we found it return true
+		if (found) {
+			return true;
+		}
+		//else continue polling
+		interval *= 2;
+		yield promise.delay(interval);
+	}
+	//if noting was found return false
+	return false;
+
+});
+
 function listTags( namesapce, name ) {
 	const options = {
 		uri: format( uri, urlencode( namesapce ), urlencode( name ) ),
@@ -55,20 +90,7 @@ function listTags( namesapce, name ) {
 
 function checkExistance( image ) {
 	const info = util.getImageInfo( image );
-	return listTags( info.docker.repo, info.docker.image ).then(  tags => {
-		if ( tags ) {
-			if ( tags.length >= 16 ) {
-				return findParallel( tags, info.docker.tag, Math.ceil( tags.length / 16 ) );
-			} else {
-				var arrayFound = tags.filter( function( item ) {
-					return item.name === info.docker.tag;
-				} );
-				return arrayFound.length !== 0;
-			}
-		} else {
-			return undefined;
-		}
-	} );
+	return checkDockerProcess( info.docker.repo, info.docker.image, info.docker.tag);
 }
 
 module.exports = {
