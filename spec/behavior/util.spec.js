@@ -39,3 +39,13 @@ describe( "ShouldUpgrade", function() {
 		done();
 	} );
 } );
+
+
+
+describe("Broken", function () {
+	
+	it("bad test", function () {
+		expect(false).to.equal(true);
+	});
+	
+});
