@@ -4,17 +4,20 @@ var _ = require( "lodash" );
 var when = require( "when" );
 var rancherFn = require( "../../src/rancher" );
 var format = require( "util" ).format;
+var config = require( "configya" )( {
+	file: "./config.json"
+} );
 
-function checkAuth( envelope, next ) {
+function checkAuth( envelope, next, other ) {
 	var userKey = envelope.headers.bearer;
-	if ( !process.env.COWPOKE_API_KEY || userKey === process.env.COWPOKE_API_KEY ) {
+	if ( !config.api.key || userKey === config.api.key ) {
 		return next();
 	} else {
 		return { status: 402, data: { message: "Unauthorized" } };
 	}
 }
 
-module.exports = function( host, environment, slack ) {
+module.exports = function( host, environment, slack, dockerhub ) {
 	return {
 		name: "environment",
 		middleware: [ checkAuth ],
@@ -42,7 +45,7 @@ module.exports = function( host, environment, slack ) {
 			upgrade: {
 				url: "/:image",
 				method: "PUT",
-				handle: integration.upgrade.bind( null, slack )
+				handle: integration.upgrade.bind( null, slack, dockerhub )
 			}
 		}
 	};

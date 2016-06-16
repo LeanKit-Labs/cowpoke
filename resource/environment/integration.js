@@ -5,7 +5,6 @@ var rancherFn = require( "../../src/rancher" );
 var format = require( "util" ).format;
 var environment = require( "../../src/data/nedb/environment" );
 var util = require( "../../src/util" );
-var dockerhub = require( "../../src/dockerhub" );
 var statusIntervals = {};
 var pendingUpgrade = {};
 
@@ -210,7 +209,7 @@ function configure( envelope ) {
 	return environment.getByName( name ).then( onEnvironment.bind( null, data ), onError );
 }
 
-function upgrade( slack, envelope ) {
+function upgrade( slack, dockerhub, envelope ) {
 	var image = envelope.data.image;
 	if ( !util.getImageInfo( image ) ) { //check tag if tag is formated correctly
 		return {
