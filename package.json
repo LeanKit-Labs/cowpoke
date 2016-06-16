@@ -4,7 +4,10 @@
   "description": "A service to handle configurable Rancher service upgrade patterns",
   "main": "src/index.js",
   "scripts": {
-    "test": "./test.sh",
+    "lint": "eslint .",
+    "mocha": "mocha --compilers js:babel-core/register -- spec/**",
+    "coverage": "babel-node node_modules/isparta/bin/isparta cover --report text --report html node_modules/mocha/bin/_mocha -- spec/** --reporter dot",
+    "test": "npm run lint && npm run mocha && npm run coverage",
     "run": "node src/index.js"
   },
   "repository": {
@@ -44,6 +47,8 @@
     "when": "^3.7.7"
   },
   "devDependencies": {
+    "babel-core": "^6.9.1",
+    "babel-preset-es2015": "^6.9.0",
     "biggulp": "^0.2.2",
     "chai": "^3.4.1",
     "chai-as-promised": "^5.2.0",
