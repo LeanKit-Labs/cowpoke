@@ -4,6 +4,7 @@ var when = require( "when" );
 var parallel = require( "when/parallel" );
 var util = require( "./util" );
 var format = require( "util" ).format;
+var poll = require( "when/poll" );
 
 var uri = "https://registry.hub.docker.com/v1/repositories/%s/%s/tags";
 
@@ -20,7 +21,7 @@ function find ( data, valueToFind, foundToken ) {
 	for ( var element in data ) {
 		if ( foundToken.found ) {
 			break;
-		} else if ( data[element].name === valueToFind) {
+		} else if ( data[element].name === valueToFind ) {
 			foundToken.found = true;
 			return true;
 		}
@@ -51,32 +52,42 @@ function findParallel( data, valueToFind, chunkSize ) {
 	} );
 }
 
-function listTags( namesapce, name ) {
+function checkTags( info, tags ) {
+	if ( tags ) {
+		if ( tags.length >= 16 ) {
+			return findParallel( tags, info.docker.tag, Math.ceil( tags.length / 16 ) );
+		} else {
+			var arrayFound = tags.filter( function( item ) {
+				return item.name === info.docker.tag;
+			} );
+			return arrayFound.length !== 0;
+		}
+	} else {
+		return undefined;
+	}
+}
+
+function listTags( info ) {
 	var options = {
-		uri: format( uri, urlencode( namesapce ), urlencode( name ) ),
+		uri: format( uri, urlencode( info.docker.repo ), urlencode( info.docker.image ) ),
 		json: true,
 		headers: {
 			Authorization: "Basic " + new Buffer( process.env.DOCKER_USER + ":" + process.env.DOCKER_PASS ).toString( "base64" )
 		}
 	};
-	return rp( options ).then( onRequest, onError ).catch( onError );
+	return rp( options ).then( onRequest, onError ).then( checkTags.bind( null, info ) ).catch( onError );
 }
 
 function checkExistance( image ) {
 	var info = util.getImageInfo( image );
-	return listTags( info.docker.repo, info.docker.image ).then( function( tags ) {
-		if ( tags ) {
-			if ( tags.length >= 16 ) {
-				return findParallel( tags, info.docker.tag, Math.ceil( tags.length / 16 ) );
-			} else {
-				var arrayFound = tags.filter( function( item ) {
-					return item.name === info.docker.tag;
-				} );
-				return arrayFound.length !== 0;
-			}
-		} else {
-			return undefined;
-		}
+	var timeoutConnection = 20000;
+	var interval = 500;
+	var bound = listTags.bind( null, info );
+	return poll( bound, function() {
+		timeoutConnection -= interval;
+		return when.resolve().delay( interval );
+	}, function( result ) {
+		return result || timeoutConnection <= 0;
 	} );
 }
 
