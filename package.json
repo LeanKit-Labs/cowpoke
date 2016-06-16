@@ -8,7 +8,7 @@
     "mocha": "mocha spec/**",
     "build": "babel-node mocha spec/**",
     "coverage": "babel-node node_modules/isparta/bin/isparta cover --report text --report html node_modules/mocha/bin/_mocha -- spec/** --reporter dot",
-    "test": "npm run lint  && npm run coverage",
+    "test": "npm run lint && npm build && npm run coverage",
     "run": "node src/index.js"
   },
   "repository": {
