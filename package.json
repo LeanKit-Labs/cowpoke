@@ -6,8 +6,9 @@
   "scripts": {
     "lint": "eslint .",
     "mocha": "mocha spec/**",
+    "build": "mocha spec/**",
     "coverage": "babel-node node_modules/isparta/bin/isparta cover --report text --report html node_modules/mocha/bin/_mocha -- spec/** --reporter dot",
-    "test": "npm run lint && npm run mocha && npm run coverage",
+    "test": "npm run lint  && npm run coverage",
     "run": "node src/index.js"
   },
   "repository": {
