@@ -1,5 +1,3 @@
-
 {
-    "sourceMaps": "inline",
-    "filename": "babel-map"
- }
+  "plugins": ["transform-strict-mode"]
+}
