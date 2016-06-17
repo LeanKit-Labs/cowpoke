@@ -67,30 +67,31 @@ function checkTags( info, tags ) {
 	}
 }
 
-function listTags( info ) {
+function listTags( user, pass, info ) {
 	var options = {
 		uri: format( uri, urlencode( info.docker.repo ), urlencode( info.docker.image ) ),
 		json: true,
 		headers: {
-			Authorization: "Basic " + new Buffer( process.env.DOCKER_USER + ":" + process.env.DOCKER_PASS ).toString( "base64" )
+			Authorization: "Basic " + new Buffer( user + ":" + pass).toString( "base64" )
 		}
 	};
 	return rp( options ).then( onRequest, onError ).then( checkTags.bind( null, info ) ).catch( onError );
 }
 
-function checkExistance( image ) {
+function checkExistance( user, pass, polltime, pollInterval, image ) {
 	var info = util.getImageInfo( image );
-	var timeoutConnection = 20000;
-	var interval = 500;
-	var bound = listTags.bind( null, info );
+	var timeoutConnection = polltime;
+	var bound = listTags.bind( null, user, pass, info );
 	return poll( bound, function() {
-		timeoutConnection -= interval;
-		return when.resolve().delay( interval );
+		timeoutConnection -= pollInterval;
+		return when.resolve().delay( pollInterval );
 	}, function( result ) {
 		return result || timeoutConnection <= 0;
 	} );
 }
 
-module.exports = {
-	checkExistance: checkExistance
+module.exports = function setup(user, pass, polltime, pollInterval ) {
+	return {
+		checkExistance: checkExistance.bind(null, user, pass, polltime, pollInterval)
+	}
 };

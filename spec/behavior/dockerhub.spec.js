@@ -30,7 +30,7 @@ var dockerhub = proxyquire( "../../src/dockerhub", {
 			}
 		}
 	}
-} );
+} )("USER", "PASS", 20000, 500);
 var invalidImage = namesapce + "/" + name + ":DNE";
 var response = [
 	{

@@ -14,7 +14,7 @@ function checkAuth( envelope, next ) {
 	}
 }
 
-module.exports = function( host, environment, slack ) {
+module.exports = function( host, environment, slack, dockerhub ) {
 	return {
 		name: "environment",
 		middleware: [ checkAuth ],
@@ -42,7 +42,7 @@ module.exports = function( host, environment, slack ) {
 			upgrade: {
 				url: "/:image",
 				method: "PUT",
-				handle: integration.upgrade.bind( null, slack )
+				handle: integration.upgrade.bind( null, slack, dockerhub )
 			}
 		}
 	};
