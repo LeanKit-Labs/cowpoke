@@ -29,7 +29,8 @@ var dockerhub = proxyquire( "../../src/dockerhub", {
 			}
 		}
 	}
-} );
+} )("user", "pass", 1000, 125, 2);
+
 var invalidImage = namesapce + "/" + name + ":DNE";
 var response = [
 	{

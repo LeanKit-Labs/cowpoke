@@ -44,15 +44,23 @@ function findParallel( data, valueToFind, chunkSize ) {
 	} );
 }
 
-let checkDockerProcess = promise.coroutine( function* ( namesapce, name, target ) {
+let checkDockerProcess = promise.coroutine( function* ( user, pass, polltime, startInterval, decayFactor, namesapce, name, target ) {
+
+	const options = {
+		uri: format( uri, urlencode( namesapce ), urlencode( name ) ),
+		json: true,
+		headers: {
+			Authorization: "Basic " + new Buffer( user + ":" + pass ).toString( "base64" )
+		}
+	};
 
 	//poll for 20 seconds to see if tag is found. The drone-cowpoke plugin may have 
 	//just pushed the tag and it may not have registered with docker yet	
-	let interval = 125;
+	let interval = startInterval;
 	const startDate = new Date().getTime();
-	while (new Date().getTime() - startDate <= 20000) {
+	while (new Date().getTime() - startDate <= polltime) {
 		let found = false;
-		const tags = yield listTags( namesapce, name );
+		const tags = yield rp( options ).catch( () => undefined );
 		//check to see if error
 		if (tags === undefined) {
 			return undefined;
@@ -69,7 +77,7 @@ let checkDockerProcess = promise.coroutine( function* ( namesapce, name, target 
 			return true;
 		}
 		//else continue polling
-		interval *= 2;
+		interval *= decayFactor;
 		yield promise.delay(interval);
 	}
 	//if noting was found return false
@@ -77,22 +85,13 @@ let checkDockerProcess = promise.coroutine( function* ( namesapce, name, target 
 
 });
 
-function listTags( namesapce, name ) {
-	const options = {
-		uri: format( uri, urlencode( namesapce ), urlencode( name ) ),
-		json: true,
-		headers: {
-			Authorization: "Basic " + new Buffer( process.env.DOCKER_USER + ":" + process.env.DOCKER_PASS ).toString( "base64" )
-		}
-	};
-	return rp( options ).then( body => body, () => undefined ).catch( () => undefined );
-}
-
-function checkExistance( image ) {
+function checkExistance( user, pass, polltime, startInterval, decayFactor, image ) {
 	const info = util.getImageInfo( image );
-	return checkDockerProcess( info.docker.repo, info.docker.image, info.docker.tag);
+	return checkDockerProcess( user, pass, polltime, startInterval, decayFactor, info.docker.repo, info.docker.image, info.docker.tag);
 }
 
-module.exports = {
-	checkExistance: checkExistance
+module.exports = function setup(user, pass, polltime, startInterval, decayFactor){
+	return {
+		checkExistance: checkExistance.bind(null, user, pass, polltime, startInterval, decayFactor)
+	};
 };

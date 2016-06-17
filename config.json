@@ -7,5 +7,12 @@
 	},
 	"slack": {
 		
+	},
+	"docker": {
+		"poll": {
+			"time": 20000,
+			"interval": 125,
+			"decay": 2
+		}
 	}
 }

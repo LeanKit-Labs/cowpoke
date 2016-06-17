@@ -12,8 +12,11 @@ if ( !process.env.DOCKER_USER || !process.env.DOCKER_PASS ) {
 const environments = require( "./data/nedb/environment" );
 fount.register( "environment", environments );
 
+
 const slack = require( "./slack" )( config.slack.token, environments );
 fount.register( "slack", slack );
+
+const dockerhub = require( "./dockerhub" )(config.docker.user, config.docker.pass, config.docker.poll.time, config.docker.poll.interval, config.docker.poll.decay)
 
 const host = hyped.createHost( autohost, {
 	port: config.host.port,
