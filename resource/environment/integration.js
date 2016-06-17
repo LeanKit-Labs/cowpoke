@@ -1,4 +1,3 @@
-const dockerhub = require( "../../src/dockerhub" );
 const _ = require( "lodash" );
 const Promise = require("bluebird");
 const rancherFn = require( "../../src/rancher" );
@@ -191,7 +190,7 @@ const upgradeProcess = Promise.coroutine( function* ( slack, image ) {
 } );
 
 
-function upgrade( slack, envelope ) {
+function upgrade( slack, dockerhub, envelope ) {
 	const image = envelope.data.image;
 	if ( !util.getImageInfo( image ) ) { //check tag if tag is formated correctly
 		return {
