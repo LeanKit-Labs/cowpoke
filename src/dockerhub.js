@@ -72,7 +72,7 @@ function listTags( user, pass, info ) {
 		uri: format( uri, urlencode( info.docker.repo ), urlencode( info.docker.image ) ),
 		json: true,
 		headers: {
-			Authorization: "Basic " + new Buffer( user + ":" + pass).toString( "base64" )
+			Authorization: "Basic " + new Buffer( user + ":" + pass ).toString( "base64" )
 		}
 	};
 	return rp( options ).then( onRequest, onError ).then( checkTags.bind( null, info ) ).catch( onError );
@@ -90,8 +90,8 @@ function checkExistance( user, pass, polltime, pollInterval, image ) {
 	} );
 }
 
-module.exports = function setup(user, pass, polltime, pollInterval ) {
+module.exports = function setup( user, pass, polltime, pollInterval ) {
 	return {
-		checkExistance: checkExistance.bind(null, user, pass, polltime, pollInterval)
-	}
+		checkExistance: checkExistance.bind( null, user, pass, polltime, pollInterval )
+	};
 };

@@ -16,7 +16,7 @@ var environments = require( "./data/nedb/environment" );
 fount.register( "environment", environments );
 
 var slack = require( "./slack" )( config.slack.token, environments );
-var dockerhub = require( "./dockerhub" )( config.docker.user, config.docker.pass, 
+var dockerhub = require( "./dockerhub" )( config.docker.user, config.docker.pass,
 	config.docker.poll.time, config.docker.poll.interval );
 fount.register( "slack", slack );
 fount.register( "dockerhub", dockerhub );
