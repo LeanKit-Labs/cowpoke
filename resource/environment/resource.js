@@ -1,12 +1,15 @@
 
 const integration = require( "./integration" );
+const config = require( "configya" )( {
+	file: "./config.json"
+} );
 
 function checkAuth( envelope, next ) {
 	const userKey = envelope.headers.bearer;
-	if ( !process.env.COWPOKE_API_KEY || userKey === process.env.COWPOKE_API_KEY ) {
+	if ( !config.api.key || userKey === config.api.key ) {
 		return next();
 	} else {
-		return {status: 402, data: {message: "Unauthorized"}};
+		return {status: 402, data: {message: "giit"}};
 	}
 }
 
