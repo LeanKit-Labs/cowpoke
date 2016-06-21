@@ -217,7 +217,7 @@ describe( "Upgrade", function() {
 			"../../src/data/nedb/environment": envMock,
 			"../../src/dockerhub": dockerMock
 		} );
-		integration.upgrade( slackMockDoNothing, dockerMock, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
+		integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
 	} );
 	it( "when tag is not found service should return 404", function() {
 		var integration = proxyquire( "../../resource/environment/integration.js", {
@@ -234,7 +234,7 @@ describe( "Upgrade", function() {
 		function testResults( result ) {
 			return result.should.deep.equal( expectedReturn );
 		}
-		return integration.upgrade( slackMockDoNothing, dockerMockDeny, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
+		return integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
 	} );
 	it( "when dockerhub validation fails should return a 401", function() {
 		var integration = proxyquire( "../../resource/environment/integration.js", {
@@ -251,7 +251,7 @@ describe( "Upgrade", function() {
 		function testResults( result ) {
 			return result.should.deep.equal( expectedReturn );
 		}
-		return integration.upgrade( slackMockDoNothing, dockerMockError, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
+		return integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } ).then( testResults );
 	} );
 	it( "should call out to slack", function( done ) {
 		var slackMockTest = {
@@ -267,7 +267,7 @@ describe( "Upgrade", function() {
 			"../../src/data/nedb/environment": envMock,
 			"../../src/dockerhub": dockerMock
 		} );
-		integration.upgrade( slackMockTest, dockerMock, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } );
+		integration.upgrade( slackMockTest, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } );
 	} );
 
 	it( "should finish the upgrade", function( done ) {
@@ -281,7 +281,7 @@ describe( "Upgrade", function() {
 			service.finish = finishUp;
 			return Promise.resolve();
 		};
-		integration.upgrade( slackMockDoNothing, dockerMock, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } );
+		integration.upgrade( slackMockDoNothing, { data: { image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef" } } );
 	} );
 } );
 
