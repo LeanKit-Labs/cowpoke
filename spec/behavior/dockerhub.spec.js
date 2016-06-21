@@ -30,7 +30,7 @@ var dockerhub = proxyquire( "../../src/dockerhub", {
 			}
 		}
 	}
-} )( "USER", "PASS", 1000, 500 );
+} );
 var invalidImage = namesapce + "/" + name + ":DNE";
 var response = [
 	{
@@ -153,10 +153,9 @@ describe( "Docker Hub API", function() {
 			} );
 
 			describe( "Image does not exist", function() {
-				this.timeout( 60000 );
 				before( function() {
 					dockerapi = nock( "https://registry.hub.docker.com" );
-					dockerapi.get( "/v1/repositories/" + urlencode( namesapce ) + "/" + urlencode( name ) + "/tags" ).times( 30 ).reply( 200, response );
+					dockerapi.get( "/v1/repositories/" + urlencode( namesapce ) + "/" + urlencode( name ) + "/tags" ).reply( 200, response );
 				} );
 				it( "should find that the image does not exist", function() {
 					function check( res ) {
@@ -184,10 +183,9 @@ describe( "Docker Hub API", function() {
 			} );
 
 			describe( "Image does not exist", function() {
-				this.timeout( 60000 );
 				before( function() {
 					dockerapi = nock( "https://registry.hub.docker.com" );
-					dockerapi.get( "/v1/repositories/" + urlencode( namesapce ) + "/" + urlencode( name ) + "/tags" ).times( 30 ).reply( 200, lotsOfTags );
+					dockerapi.get( "/v1/repositories/" + urlencode( namesapce ) + "/" + urlencode( name ) + "/tags" ).reply( 200, lotsOfTags );
 				} );
 				it( "should find that the image does not exist", function() {
 					function check( res ) {
