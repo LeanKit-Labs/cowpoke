@@ -8,7 +8,7 @@ var config = require( "configya" )( {
 } );
 var fount = require( "fount" );
 
-if ( !process.env.DOCKER_USER || !process.env.DOCKER_PASS ) {
+if ( !config.docker.user || !config.docker.pass ) {
 	throw new Error( "DOCKER_PASS or DOCKER_USER is not defined" );
 }
 
