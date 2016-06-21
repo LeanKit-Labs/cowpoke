@@ -8,6 +8,9 @@
 	"slack": {
 		
 	},
+	"api": {
+
+	},
 	"docker": {
 		"poll": {
 			"time": 20000,
