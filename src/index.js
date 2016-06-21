@@ -7,9 +7,15 @@ var config = require( "configya" )( {
 	file: "./config.json"
 } );
 var fount = require( "fount" );
+var _ = require("lodash");
 
 if ( !config.docker.user || !config.docker.pass ) {
 	throw new Error( "DOCKER_PASS or DOCKER_USER is not defined" );
+}
+
+
+if ( !_.isNumber(config.docker.poll.time) || !_.isNumber(config.docker.poll.interval)  ) {
+	throw new Error( "ERROR: docker poll time and/or interval is not numeric" );
 }
 
 var environments = require( "./data/nedb/environment" );
