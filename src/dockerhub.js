@@ -4,6 +4,7 @@ var when = require( "when" );
 var parallel = require( "when/parallel" );
 var util = require( "./util" );
 var format = require( "util" ).format;
+var poll = require( "when/poll" );
 
 var uri = "https://registry.hub.docker.com/v1/repositories/%s/%s/tags";
 
@@ -20,7 +21,7 @@ function find ( data, valueToFind, foundToken ) {
 	for ( var element in data ) {
 		if ( foundToken.found ) {
 			break;
-		} else if ( data[element].name === valueToFind) {
+		} else if ( data[element].name === valueToFind ) {
 			foundToken.found = true;
 			return true;
 		}
@@ -51,35 +52,46 @@ function findParallel( data, valueToFind, chunkSize ) {
 	} );
 }
 
-function listTags( namesapce, name ) {
-	var options = {
-		uri: format( uri, urlencode( namesapce ), urlencode( name ) ),
-		json: true,
-		headers: {
-			Authorization: "Basic " + new Buffer( process.env.DOCKER_USER + ":" + process.env.DOCKER_PASS ).toString( "base64" )
+function checkTags( info, tags ) {
+	if ( tags ) {
+		if ( tags.length >= 16 ) {
+			return findParallel( tags, info.docker.tag, Math.ceil( tags.length / 16 ) );
+		} else {
+			var arrayFound = tags.filter( function( item ) {
+				return item.name === info.docker.tag;
+			} );
+			return arrayFound.length !== 0;
 		}
-	};
-	return rp( options ).then( onRequest, onError ).catch( onError );
+	} else {
+		return undefined;
+	}
 }
 
-function checkExistance( image ) {
-	var info = util.getImageInfo( image );
-	return listTags( info.docker.repo, info.docker.image ).then( function( tags ) {
-		if ( tags ) {
-			if ( tags.length >= 16 ) {
-				return findParallel( tags, info.docker.tag, Math.ceil( tags.length / 16 ) );
-			} else {
-				var arrayFound = tags.filter( function( item ) {
-					return item.name === info.docker.tag;
-				} );
-				return arrayFound.length !== 0;
-			}
-		} else {
-			return undefined;
+function listTags( user, pass, info ) {
+	var options = {
+		uri: format( uri, urlencode( info.docker.repo ), urlencode( info.docker.image ) ),
+		json: true,
+		headers: {
+			Authorization: "Basic " + new Buffer( user + ":" + pass ).toString( "base64" )
 		}
+	};
+	return rp( options ).then( onRequest, onError ).then( checkTags.bind( null, info ) ).catch( onError );
+}
+
+function checkExistance( user, pass, polltime, pollInterval, image ) {
+	var info = util.getImageInfo( image );
+	var timeoutConnection = polltime;
+	var bound = listTags.bind( null, user, pass, info );
+	return poll( bound, function() {
+		timeoutConnection -= pollInterval;
+		return when.resolve().delay( pollInterval );
+	}, function( result ) {
+		return result || timeoutConnection <= 0;
 	} );
 }
 
-module.exports = {
-	checkExistance: checkExistance
+module.exports = function setup( user, pass, polltime, pollInterval ) {
+	return {
+		checkExistance: checkExistance.bind( null, user, pass, polltime, pollInterval )
+	};
 };
