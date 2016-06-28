@@ -4,7 +4,7 @@ var util = require( "./util" );
 var format = require( "util" ).format;
 
 var uri = "https://registry.hub.docker.com/v2/%s/%s/tags/list";
-var authUriu = "https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s/%s:pull"
+var authUriu = "https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s/%s:pull";
 
 function onRequest( body ) {
 	return body;
@@ -22,7 +22,7 @@ function auth( namesapce, name ) {
 			Authorization: "Basic " + new Buffer( process.env.DOCKER_USER + ":" + process.env.DOCKER_PASS ).toString( "base64" )
 		}
 	};
-	return rp( options ).then( function(res) {
+	return rp( options ).then( function( res ) {
 		return res.token;
 	}, onError ).catch( onError );
 }
@@ -35,14 +35,15 @@ function listTags( namesapce, name, token ) {
 			Authorization: "Bearer " + token
 		}
 	};
-	return rp( options ).then( function (res) {
+
+	return rp( options ).then( function( res ) {
 		return res.tags;
 	}, onError ).catch( onError );
 }
 
 function checkExistance( image ) {
 	var info = util.getImageInfo( image );
-	return auth(info.docker.repo, info.docker.image).then(listTags.bind( null, info.docker.repo, info.docker.image )).then( function( tags ) {
+	return auth( info.docker.repo, info.docker.image ).then( listTags.bind( null, info.docker.repo, info.docker.image ) ).then( function( tags ) {
 		if ( tags ) {
 			var arrayFound = tags.filter( function( item ) {
 				return item === info.docker.tag;
