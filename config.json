@@ -6,17 +6,6 @@
 		"path": "./data"
 	},
 	"slack": {
-		"token": ""
-	},
-	"docker":{
-		"poll": {
-			"time": 20000,
-			"interval": 500
-		},
-		"user": "",
-		"pass": ""
-	},
-	"api": {
-		"key": ""
+		
 	}
 }
