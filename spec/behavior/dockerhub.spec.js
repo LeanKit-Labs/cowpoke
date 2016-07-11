@@ -42,7 +42,7 @@ var dockerhub = proxyquire( "../../src/dockerhub", {
 			} );
 		}
 	}
-} );
+} )("my user", "my pass");
 
 describe( "Docker Hub API", function() {
 	var dockerapi;
