@@ -2,6 +2,9 @@
   "name": "cowpoke",
   "version": "0.6.0",
   "description": "A service to handle configurable Rancher service upgrade patterns",
+  "engines": {
+    "node":" >=6.0.0"
+  },
   "main": "src/index.js",
   "scripts": {
     "lint": "eslint .",
@@ -33,7 +36,7 @@
     "babel-register": "^6.9.0",
     "bluebird": "^3.4.0",
     "configya": "^0.2.2",
-    "eslint": "^2.12.0",
+    "eslint": "^3.0.1",
     "fount": "^0.1.0",
     "hyped": "^0.5.1",
     "lodash": "^3.10.1",
@@ -44,7 +47,6 @@
     "request-promise": "^3.0.0",
     "semver": "^5.1.0",
     "urlencode": "^1.1.0",
-    "webpack": "^1.13.1",
     "when": "^3.7.7"
   },
   "devDependencies": {
