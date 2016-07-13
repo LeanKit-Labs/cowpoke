@@ -1,11 +1,12 @@
 debug: true
 build:
-  image: node:5
+  image: node:6
   environment:
   - NODE_ENV=dev
   commands:
    - npm install
    - npm test
+   - npm prune --production
 
 cache:
   mount:
