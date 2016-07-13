@@ -1,6 +1,6 @@
 var _ = require( "lodash" );
 var semver = require( "semver" );
-var yaml = require('js-yaml');
+var yaml = require( "js-yaml" );
 
 function getImageInfo( image ) {
 	image = image.replace( /^docker[:]/g, "" );
@@ -55,7 +55,7 @@ function getImageInfo( image ) {
 	}
 }
 
-function isNewerOfSame(info, newInfo) {
+function isNewerOfSame( info, newInfo ) {
 	var version = _.filter( [ info.version, info.build ] ).join( "-" );
 	var newVersion = _.filter( [ newInfo.version, newInfo.build ] ).join( "-" );
 	var compatible = info.owner === newInfo.owner &&
@@ -65,16 +65,16 @@ function isNewerOfSame(info, newInfo) {
 	return compatible && isNewer;
 }
 
-function shouldUpgradeStack(stack, newInfo) {
-	var yamlData = yaml.safeLoad(stack.dockerCompose)[newInfo.docker.image +"-app"];
-	if (!yamlData) {
-		return false
+function shouldUpgradeStack( stack, newInfo ) {
+	var yamlData = yaml.safeLoad( stack.dockerCompose )[newInfo.docker.image + "-app"];
+	if ( !yamlData ) {
+		return false;
 	}
-	var info = getImageInfo(yamlData.image);
+	var info = getImageInfo( yamlData.image );
 	if ( !info ) { //short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
 		return false;
 	}
-	return isNewerOfSame(info, newInfo)
+	return isNewerOfSame( info, newInfo );
 }
 
 function shouldUpgrade( service, newInfo ) {
@@ -82,8 +82,7 @@ function shouldUpgrade( service, newInfo ) {
 	if ( !info ) { //short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
 		return false;
 	}
-	return isNewerOfSame(info, newInfo);
-	
+	return isNewerOfSame( info, newInfo );
 }
 
 module.exports = {

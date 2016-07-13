@@ -4,7 +4,7 @@ var semver = require( "semver" );
 var urlLib = require( "url" );
 var util = require( "./util" );
 var when = require( "when" );
-var poll = require('when/poll');
+var poll = require( "when/poll" );
 //var log = console.log;
 
 function get( url, credentials, path ) {
@@ -88,26 +88,26 @@ function listServices( http, serviceUrl, environment, stack ) {
 		.then( onList, onError );
 }
 
-function upgradeStack(http, stack, template) {
-	return http.post(stack.actions.upgrade, {
-		externalId: stack.externalId.substring(0, stack.externalId.lastIndexOf(":")-1)+ template.version,
-        dockerCompose: template["docker-compose.yml"],
-        rancherCompose : template["rancher-compose.yml"],
-        environment: stack.environment
-	}).then(poll.bind(null, function () {
-		return http.get(stack.links.self, {});
-	}, 500, function(stack) {
+function upgradeStack( http, stack, template ) {
+	return http.post( stack.actions.upgrade, {
+		externalId: stack.externalId.substring( 0, stack.externalId.lastIndexOf( ":" ) - 1 ) + template.version,
+		dockerCompose: template["docker-compose.yml"],
+		rancherCompose: template["rancher-compose.yml"],
+		environment: stack.environment
+	} ).then( poll.bind( null, function() {
+		return http.get( stack.links.self, {} );
+	}, 500, function( stack ) {
 		return stack.state === "upgraded";
-	})).then(function (stack) {
-		return http.post(stack.actions.finishupgrade, {});
-	})
+	} ) ).then( function( stack ) {
+		return http.post( stack.actions.finishupgrade, {} );
+	} );
 }
 
 function listStacks( http, stackUrl, environment ) {
 	function onList( result ) {
 		var data = result.data;
-		for (var i = 0; i < data.length; i++) {
-			data[i].upgrade = upgradeStack.bind(null, http, data[i]);
+		for ( var i = 0; i < data.length; i++ ) {
+			data[i].upgrade = upgradeStack.bind( null, http, data[i] );
 		}
 		return data;
 	}

@@ -49,7 +49,6 @@ module.exports = function( host, environment, slack, github ) {
 				method: "PUT",
 				handle: integration.upgrade.bind( null, slack )
 			}
-			
 		}
 	};
 };
