@@ -6,6 +6,11 @@ var format = require( "util" ).format;
 var environment = require( "../../src/data/nedb/environment" );
 var util = require( "../../src/util" );
 var dockerhub = require( "../../src/dockerhub" );
+var rp = require('request-promise');
+var yaml = require('js-yaml');
+function isnum (val) {
+	return /^\d+$/.test(val);
+}
 var statusIntervals = {};
 var pendingUpgrade = {};
 
@@ -241,6 +246,136 @@ function upgrade( slack, envelope ) {
 	} );
 }
 
+
+
+function getTemplate(token, catalogOwner, catalog, info) {
+	function onRancherCompose(templateResult, rancherCompose) {
+		templateResult["rancher-compose.yml"] = rancherCompose;
+		return templateResult;
+	}
+	function onDockerCompose(templateResult, response, dockerCompose) {
+		templateResult["docker-compose.yml"] = dockerCompose;
+		for (var i = 0; i < response.length; i++) {
+			if (response[i].name === "rancher-compose.yml") {
+				return rp(response[i].download_url, {
+					qs: {
+						access_token: token
+					},
+					headers: {
+						'User-Agent': 'buildEnv'
+					}
+				}).then(onRancherCompose.bind(null, templateResult));
+			}
+		}
+	}
+	function onTemplate(v, response) {
+		 var templateResult = {
+			version: v
+		}
+		var files = [];
+		for (let i = 0; i < response.length; i++) {
+			if (response[i].name === "docker-compose.yml") {
+				return rp(response[i].download_url, {
+					qs: {
+						access_token: token
+					},
+					headers: {
+						'User-Agent': 'buildEnv'
+					}
+				}).then(onDockerCompose.bind(null, templateResult, response) );
+			}
+		}
+
+	}
+	function onResponse(response) {
+		return when.all(_.map(response, function (dir) {
+			if (isnum(dir.name)) {
+				return  rp(dir._links.self, {
+					qs: {
+						access_token: token
+					},
+					headers: {
+						'User-Agent': 'buildEnv'
+					},
+					json: true
+				}).then(onTemplate.bind(null, dir.name));
+			}
+		} ) ).then(function(templates) {
+			return _.filter(templates, function (template) {
+				if (!template) {return false;}
+				var dockerCompose = yaml.safeLoad(template["docker-compose.yml"]);
+				return util.getImageInfo(dockerCompose[info.docker.image +"-app"].image).newImage === info.newImage;
+			});
+		} ).then(function name(resultsAsArray) {
+			return resultsAsArray[0];
+		});
+	}
+
+      return rp(format("https://api.github.com/repos/%s/%s/contents/templates/%s?ref=master", catalogOwner, catalog, info.branch), {
+			qs: {
+				access_token: token
+			},
+			headers: {
+				'User-Agent': 'buildEnv'
+			},
+			json: true
+		}).then(onResponse).catch(console.log);
+    
+}
+
+function upgradeStack(slack, github, envelope) {
+	var info = util.getImageInfo(envelope.data.docker_image);
+	function onTemplate(template) {
+		return environment.getAll().then( onEnvs.bind(null, template), onReadError );
+	}
+	function finish(env, channels, stack) {
+		var message = format( "The upgrade of the stack %s in environment %s has been finalized.", stack.name, env.name );
+		_.each( channels, function( channel ) {
+			slack.send( channel, message );
+		} );
+		return stack;
+	}
+	function onChannels(env, template, stack, channels) {
+		var message = format( "The upgrade of the stack %s in environment %s has started.", stack.name, env.name );
+		_.each( channels, function( channel ) {
+			slack.send( channel, message );
+		} );
+		return stack.upgrade(template).then(finish.bind(null, env, channels));
+	}
+	function onStacks(env, template, stacks) {
+		var upgradedStacks = [];
+
+		for (var i = 0; i < stacks.length; i++) {
+			if (util.shouldUpgradeStack(stacks[i], info)) {
+				upgradedStacks.push(stacks[i]);
+				environment.getChannels().then(onChannels.bind(null, env, template, stacks[i]));		
+			}
+		}
+		return upgradedStacks;
+	}
+	function onEnvironmentsLoaded( template, environments ) {
+		var name = _.keys( environments )[ 0 ];
+		var env = environments[ name ];
+		return env.listStacks().then(onStacks.bind(null, env, template));
+	}
+
+	function onRancher(template, rancher ) {
+		return rancher.listEnvironments().then( onEnvironmentsLoaded.bind(null, template), onConnectionError );
+	}
+
+	function onEnvs(template, envs ) {
+		var done = [];
+		for (var i = 0; i < envs.length; i++) {
+			done.push(rancherFn( envs[i].baseUrl, {
+				key: envs[i].key,
+				secret: envs[i].secret
+			} ).then( onRancher.bind(null, template), onConnectionError ));
+		}
+		return when.all(done)
+	}
+	return getTemplate(github.token, github.owner, envelope.data.rancher_catalog, info).then(onTemplate);
+}
+
 function getEnv( envelope ) {
 	var name = envelope.data.environment;
 	function onEnv( env ) {
@@ -259,5 +394,6 @@ module.exports = {
 	create: create,
 	configure: configure,
 	upgrade: upgrade,
-	getEnv: getEnv
+	getEnv: getEnv,
+	upgradeStack: upgradeStack
 };
