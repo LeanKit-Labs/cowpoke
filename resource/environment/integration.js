@@ -341,21 +341,21 @@ function upgradeStack( slack, github, envelope ) {
 	}
 	function onStacks( env, template, stacks ) {
 		var upgradedStacks = [];
-		function onUpgradeCheck(stack, should) {
-			if (should) {
+		function onUpgradeCheck( stack, should ) {
+			if ( should ) {
 				upgradedStacks.push( stack );
 				environment.getChannels().then( onChannels.bind( null, env, template, stack ) );
 			}
 		}
 		var promiseList = [];
 		for ( var i = 0; i < stacks.length; i++ ) {
-			promiseList.push(util.shouldUpgradeStack( stacks[i], info ).then(onUpgradeCheck.bind( null, stacks[i])));
+			promiseList.push( util.shouldUpgradeStack( stacks[i], info ).then( onUpgradeCheck.bind( null, stacks[i] ) ) );
 		}
-		return when.all(promiseList).then(function () {
+		return when.all( promiseList ).then( function() {
 			return upgradedStacks;
-		}).catch(function name(e) {
-			console.log(e);
-		});
+		} ).catch( function name( e ) {
+			console.log( e );
+		} );
 	}
 	function onEnvironmentsLoaded( template, environments ) {
 		var name = _.keys( environments )[ 0 ];

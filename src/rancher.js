@@ -104,16 +104,15 @@ function upgradeStack( http, stack, template ) {
 }
 
 function listStackServices( http, stack ) {
-	return http.get( stack.links.services, {}).then( function(res ) {
+	return http.get( stack.links.services, {} ).then( function( res ) {
 		return _.reduce( res.data, function( result, value ) {
 			if ( value.kind === "service" ) {
 				result.push( parseService( value, http, "", "" ) ) ;
 			}
 			return result;
 		}, [] );
-	});
-};
-
+	} );
+}
 
 function listStacks( http, stackUrl, environment ) {
 	function onList( result ) {

@@ -56,17 +56,16 @@ function getImageInfo( image ) {
 }
 
 function shouldUpgradeStack( stack, newInfo ) {
-	function onServices(services) {
-		for (var i = 0; i < services.length; i++) {
-			if (shouldUpgrade(services[i], newInfo)) {
+	function onServices( services ) {
+		for ( var i = 0; i < services.length; i++ ) {
+			if ( shouldUpgrade( services[i], newInfo ) ) {
 				return true;
 			}
 		}
 		return false;
 	}
-	return stack.listServices().then(onServices);
+	return stack.listServices().then( onServices );
 }
-
 
 function isNewerOfSame( info, newInfo ) {
 	var version = _.filter( [ info.version, info.build ] ).join( "-" );
