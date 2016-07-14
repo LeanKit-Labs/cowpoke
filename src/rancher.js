@@ -91,11 +91,23 @@ const upgradeStack = Promise.coroutine(function*(http, stack, template) {
 	return newStack;
 });
 
+function listStackServices(http, stack) {
+	return http.get(stack.links.services, {}).then( res => {
+		return _.reduce(res.data, (result, value) => {
+			if (value.kind === "service") {
+				result.push(parseService(value, http, "", ""));
+			}
+			return result;
+		}, []);
+	});
+};
+
 function listStacks( http, stackUrl) {
 	return http.get( stackUrl ).then( result => {
 		const data = result.data;
 		for ( let i = 0; i < data.length; i++ ) {
 			data[i].upgrade = upgradeStack.bind( null, http, data[i] );
+			data[i].listServices = listStackServices.bind(null, http, data[i]);
 		}
 		return data;
 	}, error => error );
@@ -140,12 +152,12 @@ function upgradeAll( http, environment, dockerImage ) {
 	return environment.listServices()
 		.then( list => _.filter( list, service => util.shouldUpgrade( service, newInfo )), () => [] )
 		.then( list => {
-	if ( list.length > 0 ) {
-		return when.all( _.map( list,  service => service.upgrade( dockerImage )) );
-	} else {
-		return [];
-	}
-});
+			if ( list.length > 0 ) {
+				return when.all( _.map( list,  service => service.upgrade( dockerImage )) );
+			} else {
+				return [];
+			}
+		});
 }
 
 function upgradeService( http, upgradeUrl, service, environment, stack, dockerImage ) {

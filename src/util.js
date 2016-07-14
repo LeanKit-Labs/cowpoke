@@ -1,6 +1,7 @@
 const _ = require( "lodash" );
 const semver = require( "semver" );
 const yaml = require( "js-yaml" );
+const Promise = require( "bluebird" );
 
 function getImageInfo( image ) {
 	image = image.replace( /^docker[:]/g, "" );
@@ -54,18 +55,15 @@ function getImageInfo( image ) {
 	}
 }
 
-function shouldUpgradeStack( stack, newInfo ) {
-	const yamlData = yaml.safeLoad( stack.dockerCompose );
-	for (let service in yamlData) {
-		if (yamlData.hasOwnProperty(service)) {
-			const info = getImageInfo( yamlData[service].image );
-			if (info && isNewerOfSame( info, newInfo )) {
-				return true;
-			}
+const shouldUpgradeStack = Promise.coroutine(function* ( stack, newInfo ) {
+	let services = yield stack.listServices();
+	for (var i = 0; i < services.length; i++) {
+		if (shouldUpgrade(services[i], newInfo)) {
+			return true;
 		}
 	}
 	return false;
-}
+});
 
 function isNewerOfSame( info, newInfo ) {
 	const version = _.filter( [info.version, info.build] ).join( "-" );

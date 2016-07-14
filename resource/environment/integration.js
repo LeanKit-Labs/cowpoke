@@ -357,21 +357,22 @@ const upgradeStack = Promise.coroutine(function* ( slack, dockerhub, github, env
 		const channels = yield environment.getChannels();
 		const stacks = yield rancherEnviorments[i].listStacks();
 		for ( let j = 0; j < stacks.length; j++ ) {
-			if ( util.shouldUpgradeStack( stacks[j], info ) ) {
+			const shouldUpgrade = yield util.shouldUpgradeStack( stacks[j], info );
+			if (shouldUpgrade) {
 				upgradedStacks.push( {
 					name: stacks[j].name,
 					id: stacks[j].id 
 				});
 				sendMessage(slack, channels, "starting upgrade of stack " + stacks[j].name + " in " + rancherEnviorments[i].name);
 				stacks[j].upgrade(template).then( 
-					stack => sendMessage(slack, channels, "finished upgrade of stack " + stack[j].name + " in " + rancherEnviorments[i].name)
+					() => sendMessage(slack, channels, "finished upgrade of stack " + stacks[j].name + " in " + rancherEnviorments[i].name)
 				).catch( error => {
 					console.error("error incountered while trying to upgrade stack ", stacks[j].name, " in ", rancherEnviorments[i].name, ": ", error);
 					sendMessage(slack, channels, "there was an error during upgrade of stack " + stacks[j].name + " in " + rancherEnviorments[i].name + ".");
 				});
 			}
 		}
-		if (upgradedStacks) {
+		if (upgradedStacks.length !== 0) {
 			upgraded.push( {
 				environment: rancherEnviorments[i].name,
 				upgraded: upgradedStacks
