@@ -103,11 +103,24 @@ function upgradeStack( http, stack, template ) {
 	} );
 }
 
+function listStackServices( http, stack ) {
+	return http.get( stack.links.services, {}).then( function(res ) {
+		return _.reduce( res.data, function( result, value ) {
+			if ( value.kind === "service" ) {
+				result.push( parseService( value, http, "", "" ) ) ;
+			}
+			return result;
+		}, [] );
+	});
+};
+
+
 function listStacks( http, stackUrl, environment ) {
 	function onList( result ) {
 		var data = result.data;
 		for ( var i = 0; i < data.length; i++ ) {
 			data[i].upgrade = upgradeStack.bind( null, http, data[i] );
+			data[i].listServices = listStackServices.bind( null, http, data[i] );
 		}
 		return data;
 	}

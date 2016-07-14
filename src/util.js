@@ -55,6 +55,19 @@ function getImageInfo( image ) {
 	}
 }
 
+function shouldUpgradeStack( stack, newInfo ) {
+	function onServices(services) {
+		for (var i = 0; i < services.length; i++) {
+			if (shouldUpgrade(services[i], newInfo)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	return stack.listServices().then(onServices);
+}
+
+
 function isNewerOfSame( info, newInfo ) {
 	var version = _.filter( [ info.version, info.build ] ).join( "-" );
 	var newVersion = _.filter( [ newInfo.version, newInfo.build ] ).join( "-" );
@@ -63,18 +76,6 @@ function isNewerOfSame( info, newInfo ) {
 						info.branch === newInfo.branch;
 	var isNewer = semver.gtr( newVersion, version );
 	return compatible && isNewer;
-}
-
-function shouldUpgradeStack( stack, newInfo ) {
-	var yamlData = yaml.safeLoad( stack.dockerCompose )[newInfo.docker.image + "-app"];
-	if ( !yamlData ) {
-		return false;
-	}
-	var info = getImageInfo( yamlData.image );
-	if ( !info ) { //short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
-		return false;
-	}
-	return isNewerOfSame( info, newInfo );
 }
 
 function shouldUpgrade( service, newInfo ) {
