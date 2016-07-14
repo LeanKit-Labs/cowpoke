@@ -1,5 +1,6 @@
 const _ = require( "lodash" );
 const semver = require( "semver" );
+const yaml = require( "js-yaml" );
 
 function getImageInfo( image ) {
 	image = image.replace( /^docker[:]/g, "" );
@@ -53,11 +54,20 @@ function getImageInfo( image ) {
 	}
 }
 
-function shouldUpgrade( service, newInfo ) {
-	const info = service.buildInfo;
-	if ( !info ) { //short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
-		return false;
+function shouldUpgradeStack( stack, newInfo ) {
+	const yamlData = yaml.safeLoad( stack.dockerCompose );
+	for (let service in yamlData) {
+		if (yamlData.hasOwnProperty(service)) {
+			const info = getImageInfo( yamlData[service].image );
+			if (info && isNewerOfSame( info, newInfo )) {
+				return true;
+			}
+		}
 	}
+	return false;
+}
+
+function isNewerOfSame( info, newInfo ) {
 	const version = _.filter( [info.version, info.build] ).join( "-" );
 	const newVersion = _.filter( [newInfo.version, newInfo.build] ).join( "-" );
 	const compatible = info.owner === newInfo.owner &&
@@ -67,7 +77,17 @@ function shouldUpgrade( service, newInfo ) {
 	return compatible && isNewer;
 }
 
+function shouldUpgrade( service, newInfo ) {
+	const info = service.buildInfo;
+	if ( !info ) { //short circut the method so that if the tag is invaild to do not check compatbility or version to avoid errors due to invaild data
+		return false;
+	}
+	return isNewerOfSame(info, newInfo);
+	
+}
+
 module.exports = {
 	getImageInfo,
-	shouldUpgrade
+	shouldUpgrade,
+	shouldUpgradeStack
 };

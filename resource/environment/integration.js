@@ -4,6 +4,11 @@ const rancherFn = require( "../../src/rancher" );
 const format = require( "util" ).format;
 const environment = require( "../../src/data/nedb/environment" );
 const util = require( "../../src/util" );
+const yaml = require( "js-yaml" );
+const when = require( "when" );
+const rp = require( "request-promise" );
+
+const isnum = val => /^\d+$/.test( val );
 
 function onFailure( err ) {
 	return {
@@ -20,6 +25,36 @@ const connectionError = {
 		message: "Could not connect to Rancher instance."
 	}
 };
+
+const readError = {
+	status: 404,
+	data: {
+		message: "Unable to get information from the database"
+	}
+};
+
+const dockerError = {
+	data: {
+		message: "Validation with Dockerhub failed."
+	},
+	status: 401
+};
+
+const tagNotFoundError = {
+	data: {
+		message: "Image does not exist in Dockerhub"
+	},
+	status: 404
+};
+
+function invaildTagError(image) {
+	return {
+		status: 400,
+		data: {
+			message: "Invalid Image (" + image + "). Expected tag to be formatted by buildgoggles."
+		}
+	};
+}
 
 function list() {
 	return environment.getAll().then( data => ( {data} ), onFailure );
@@ -129,14 +164,7 @@ const notificationProcess = Promise.coroutine( function* ( image, environmentNam
 const upgradeProcess = Promise.coroutine( function* ( slack, image ) {
 	
 	//Get the environments from the database
-	let environments = yield environment.getAll().catch( () => (
-		{
-			status: 404,
-			data: {
-				message: "Unable to get information from the database"
-			}
-		}
-	) );
+	let environments = yield environment.getAll().catch( () => readError);
 	//encase of error return it
 	if ( environments.status ) {
 		return environments;
@@ -193,30 +221,15 @@ const upgradeProcess = Promise.coroutine( function* ( slack, image ) {
 function upgrade( slack, dockerhub, envelope ) {
 	const image = envelope.data.image;
 	if ( !util.getImageInfo( image ) ) { //check tag if tag is formated correctly
-		return {
-			status: 400,
-			data: {
-				message: "Invalid Image (" + image + "). Expected tag to be formatted by buildgoggles."
-			}
-		};
+		return invaildTagError(image);
 	}
 	return dockerhub.checkExistance( image ).then( tagExsits => {
 		if ( tagExsits === undefined ) {
-			return Promise.resolve( {
-				data: {
-					message: "Validation with Dockerhub failed."
-				},
-				status: 401
-			} );
+			return Promise.resolve( dockerError );
 		} else if ( tagExsits ) {
 			return upgradeProcess(slack, image);
 		} else {
-			return Promise.resolve( {
-				data: {
-					message: "Image does not exist in Dockerhub"
-				},
-				status: 404
-			} );
+			return Promise.resolve( tagNotFoundError );
 		}
 	} );
 }
@@ -233,10 +246,152 @@ function getEnv( envelope ) {
 	} );
 }
 
+const readTemplate = Promise.coroutine(function* (token, v, response){
+	const templateResult = {
+		version: v
+	};
+	for ( var i = 0; i < response.length; i++ ) {
+		templateResult[response[i].name] = yield rp( response[i].download_url, {
+			qs: {
+				access_token: token // eslint-disable-line
+			},
+			headers: {
+				"User-Agent": "cowpoke"
+			}
+		} );
+	}
+	return templateResult;
+});
+
+const getTemplate = Promise.coroutine(function* ( token, catalogOwner, catalog, info ) {
+
+	let response =  yield rp( format( "https://api.github.com/repos/%s/%s/contents/templates/%s?ref=master", catalogOwner, catalog, info.branch ), {
+		qs: {
+			access_token: token // eslint-disable-line
+		},
+		headers: {
+			"User-Agent": "cowpoke"
+		},
+		json: true
+	} ).catch(err => {
+		console.error(err);
+		return undefined;
+	});
+
+	if (response === undefined) {
+		return undefined;
+	}
+	
+	const templateRequests = [];
+	for (let i = 0; i < response.length; i++) {
+		if ( isnum( response[i].name ) ) {
+			templateRequests.push(rp( response[i]._links.self, {
+				qs: {
+					access_token: token // eslint-disable-line
+				},
+				headers: {
+					"User-Agent": "cowpoke"
+				},
+				json: true
+			}).then(readTemplate.bind(null, token, response[i].name)));
+		}
+	}
+	let templates = yield when.all(templateRequests);
+	for (let i = 0; i < templates.length; i++) {
+		let dockerCompose = yaml.safeLoad( templates[i]["docker-compose.yml"] );
+		for (let service in dockerCompose) {
+			const currentImage = util.getImageInfo( dockerCompose[service].image );
+			if (dockerCompose.hasOwnProperty(service) && currentImage && currentImage.newImage === info.newImage) {
+				return  templates[i];
+			}
+		}
+	}
+	return undefined;
+});
+
+const upgradeStack = Promise.coroutine(function* ( slack, dockerhub, github, envelope ) {
+	const info = util.getImageInfo( envelope.data.docker_image );
+	if (!info) {
+		return invaildTagError(envelope.data.docker_image);
+	}
+	const exists = dockerhub.checkExistance( envelope.data.docker_image );
+	if (exists === undefined) {
+		return dockerError;
+	} else if (!exists) {
+		return tagNotFoundError;
+	}
+	//get the template
+	const template = yield getTemplate( github.token, github.owner, envelope.data.rancher_catalog, info);
+	if ( template === undefined ) { 
+		return {
+			status: 404,
+			data: {
+				message: "Unable to get information from github"
+			}
+		};
+	}
+	//get the environments
+	const storedEnviorments = yield environment.getAll().catch( () => undefined );
+	if ( storedEnviorments === undefined ) { 
+		return readError;
+	}
+	//get the rancher data
+	const envRequests = [];
+	for ( let i = 0; i < storedEnviorments.length; i++ ) {
+		envRequests.push( rancherFn( storedEnviorments[i].baseUrl, {
+			key: storedEnviorments[i].key,
+			secret: storedEnviorments[i].secret
+		} )
+		.then( rancher => rancher.listEnvironments())
+		.then(environments => environments[_.keys( environments )[0]])
+		.catch(error => {
+			console.log("error while trying to connect to " + storedEnviorments[i].name, ": ", error);
+			return [];
+		}));
+	}
+	//loop through the stacks and upgrade those that match
+	const rancherEnviorments = yield when.all( envRequests );
+	const upgraded = [];
+	for (let i = 0; i < rancherEnviorments.length; i++) {
+		const upgradedStacks = [];
+		const channels = yield environment.getChannels();
+		const stacks = yield rancherEnviorments[i].listStacks();
+		for ( let j = 0; j < stacks.length; j++ ) {
+			if ( util.shouldUpgradeStack( stacks[j], info ) ) {
+				upgradedStacks.push( {
+					name: stacks[j].name,
+					id: stacks[j].id 
+				});
+				sendMessage(slack, channels, "starting upgrade of stack " + stacks[j].name + " in " + rancherEnviorments[i].name);
+				stacks[j].upgrade(template).then( 
+					stack => sendMessage(slack, channels, "finished upgrade of stack " + stack[j].name + " in " + rancherEnviorments[i].name)
+				).catch( error => {
+					console.error("error incountered while trying to upgrade stack ", stacks[j].name, " in ", rancherEnviorments[i].name, ": ", error);
+					sendMessage(slack, channels, "there was an error during upgrade of stack " + stacks[j].name + " in " + rancherEnviorments[i].name + ".");
+				});
+			}
+		}
+		if (upgradedStacks) {
+			upgraded.push( {
+				environment: rancherEnviorments[i].name,
+				upgraded: upgradedStacks
+			});
+		}
+	}
+	if (upgraded) {
+		return {
+			upgraded_stacks_by_environment: upgraded // eslint-disable-line
+		};
+	} else {
+		return "Nothing eligible for upgrading";
+	}
+});
+
 module.exports = {
 	list,
 	create,
 	configure,
 	upgrade,
-	getEnv
+	getEnv,
+	upgradeStack
 };

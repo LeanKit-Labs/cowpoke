@@ -3,6 +3,8 @@ const request = require( "request" );
 const urlLib = require( "url" );
 const util = require( "./util" );
 const when = require( "when" );
+const Promise = require("bluebird");
+
 
 function get( url, credentials, path ) {
 	let route = /$http(s)?[:]/.test( path ) ?
@@ -72,21 +74,30 @@ function listServices( http, serviceUrl, environment, stack ) {
 	}, error => error );
 }
 
-function listStacks( http, stackUrl, environment ) {
+const upgradeStack = Promise.coroutine(function*(http, stack, template) {
+	let newStack = yield http.post( stack.actions.upgrade, {
+		externalId: stack.externalId.substring( 0, stack.externalId.lastIndexOf( ":" ) - 1 ) + template.version,
+		dockerCompose: template["docker-compose.yml"],
+		rancherCompose: template["rancher-compose.yml"],
+		environment: stack.environment
+	});
+
+	while (newStack.state !== "upgraded") {
+		yield Promise.delay(500);
+		newStack = yield http.get( stack.links.self, {} );
+	}
+	newStack = yield http.post( newStack.actions.finishupgrade, {} );
+
+	return newStack;
+});
+
+function listStacks( http, stackUrl) {
 	return http.get( stackUrl ).then( result => {
 		const data = result.data;
-		return _.reduce( data, ( acc, stack ) => {
-			acc[stack.name] = {
-				id: stack.id,
-				name: stack.name,
-				environmentId: stack.accountId,
-				environmentName: environment,
-				description: stack.description,
-				state: stack.state,
-				listServices: listServices.bind( null, http, stack.links.services, environment, stack.name )
-			};
-			return acc;
-		}, {} );
+		for ( let i = 0; i < data.length; i++ ) {
+			data[i].upgrade = upgradeStack.bind( null, http, data[i] );
+		}
+		return data;
 	}, error => error );
 }
 
@@ -127,8 +138,8 @@ function parseService( service, http, environment, stack ) {
 function upgradeAll( http, environment, dockerImage ) {
 	const newInfo = util.getImageInfo( dockerImage );
 	return environment.listServices()
-        .then( list => _.filter( list, service => util.shouldUpgrade( service, newInfo )), () => [] )
-        .then( list => {
+		.then( list => _.filter( list, service => util.shouldUpgrade( service, newInfo )), () => [] )
+		.then( list => {
 	if ( list.length > 0 ) {
 		return when.all( _.map( list,  service => service.upgrade( dockerImage )) );
 	} else {
