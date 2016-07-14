@@ -11,6 +11,10 @@
 	"api": {
 
 	},
+	"github": {
+		"owner": "",
+		"token": ""
+	},
 	"docker": {
 		"user": null,
 		"pass": null
