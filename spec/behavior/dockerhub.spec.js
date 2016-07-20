@@ -4,18 +4,18 @@ var Promise = require("bluebird");
 var nock = require( "nock" );
 var urlencode = require( "urlencode" );
 var rp = require( "request-promise" );
-var namesapce = "leankit";
+var namespace = "leankit";
 var name = "cowpoke";
 var tagToCheck = "tag1";
-var validImage = namesapce + "/" + name + ":" + tagToCheck;
-var invalidImage = namesapce + "/" + name + ":DNE";
+var validImage = namespace + "/" + name + ":" + tagToCheck;
+var invalidImage = namespace + "/" + name + ":DNE";
 var dockerhub = proxyquire( "../../src/dockerhub", {
 	"./util": {
 		getImageInfo: function( image ) {
 			if ( image === validImage ) {
 				return {
 					docker: {
-						repo: namesapce,
+						repo: namespace,
 						image: name,
 						tag: tagToCheck
 					}
@@ -23,7 +23,7 @@ var dockerhub = proxyquire( "../../src/dockerhub", {
 			} else {
 				return {
 					docker: {
-						repo: namesapce,
+						repo: namespace,
 						image: name,
 						tag: "DNE"
 					}
