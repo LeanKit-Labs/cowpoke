@@ -4,13 +4,13 @@ var chai = require( "chai" );
 chai.use( require( "chai-as-promised" ) );
 global.should = chai.should();
 global.expect = chai.expect;
-global.when = require( "when" );
+global.bluebird = require("bluebird");
 global.fs = require( "fs" );
 global.sinon = require( "sinon" );
 chai.use( require( "sinon-chai" ) );
 require( "sinon-as-promised" );
 
-/* global _, when  */
+/* global _, bluebird  */
 global.nock = require( "nock" );
 
 function deepCompare( a, b, k ) {
@@ -24,7 +24,7 @@ function deepCompare( a, b, k ) {
 		} );
 	} else {
 		/* eslint-disable eqeqeq */
-		var equal = a == b; // jshint ignore:line
+		var equal = a == b;
 		/* eslint-enable eqeqeq */
 		if ( !equal ) {
 			diffs.push( "expected " + k + " to equal " + a + " but got " + b );
@@ -36,7 +36,7 @@ function deepCompare( a, b, k ) {
 chai.Assertion.addMethod( "partiallyEql", function( partial ) {
 	var obj = this._obj;
 	if ( !obj.then ) {
-		obj = when.resolve( obj );
+		obj = bluebird.resolve( obj );
 	}
 	var self = this;
 	return obj.then( function( actual ) {

@@ -5,7 +5,6 @@ const format = require( "util" ).format;
 const environment = require( "../../src/data/nedb/environment" );
 const util = require( "../../src/util" );
 const yaml = require( "js-yaml" );
-const when = require( "when" );
 const rp = require( "request-promise" );
 
 const isnum = val => /^\d+$/.test( val );
@@ -47,7 +46,7 @@ const tagNotFoundError = {
 	status: 404
 };
 
-function invaildTagError(image) {
+function invalidTagError(image) {
 	return {
 		status: 400,
 		data: {
@@ -221,7 +220,7 @@ const upgradeProcess = Promise.coroutine( function* ( slack, image ) {
 function upgrade( slack, dockerhub, envelope ) {
 	const image = envelope.data.image;
 	if ( !util.getImageInfo( image ) ) { //check tag if tag is formated correctly
-		return invaildTagError(image);
+		return invalidTagError(image);
 	}
 	return dockerhub.checkExistance( image ).then( tagExsits => {
 		if ( tagExsits === undefined ) {
@@ -296,7 +295,7 @@ const getTemplate = Promise.coroutine(function* ( token, catalogOwner, catalog, 
 			}).then(readTemplate.bind(null, token, response[i].name)));
 		}
 	}
-	let templates = yield when.all(templateRequests);
+	let templates = yield Promise.all(templateRequests);
 	for (let i = 0; i < templates.length; i++) {
 		let dockerCompose = yaml.safeLoad( templates[i]["docker-compose.yml"] );
 		for (let service in dockerCompose) {
@@ -312,7 +311,7 @@ const getTemplate = Promise.coroutine(function* ( token, catalogOwner, catalog, 
 const upgradeStack = Promise.coroutine(function* ( slack, dockerhub, github, envelope ) {
 	const info = util.getImageInfo( envelope.data.docker_image );
 	if (!info) {
-		return invaildTagError(envelope.data.docker_image);
+		return invalidTagError(envelope.data.docker_image);
 	}
 	const exists = dockerhub.checkExistance( envelope.data.docker_image );
 	if (exists === undefined) {
@@ -331,16 +330,16 @@ const upgradeStack = Promise.coroutine(function* ( slack, dockerhub, github, env
 		};
 	}
 	//get the environments
-	const storedEnviorments = yield environment.getAll().catch( () => undefined );
-	if ( storedEnviorments === undefined ) { 
+	const storedEnvironments = yield environment.getAll().catch( () => undefined );
+	if ( storedEnvironments === undefined ) { 
 		return readError;
 	}
 	//get the rancher data
 	const envRequests = [];
-	for ( let i = 0; i < storedEnviorments.length; i++ ) {
-		envRequests.push( rancherFn( storedEnviorments[i].baseUrl, {
-			key: storedEnviorments[i].key,
-			secret: storedEnviorments[i].secret
+	for ( let i = 0; i < storedEnvironments.length; i++ ) {
+		envRequests.push( rancherFn( storedEnvironments[i].baseUrl, {
+			key: storedEnvironments[i].key,
+			secret: storedEnvironments[i].secret
 		} )
 		.then( rancher => rancher.listEnvironments())
 		.then(environments => environments[_.keys( environments )[0]])
@@ -350,7 +349,7 @@ const upgradeStack = Promise.coroutine(function* ( slack, dockerhub, github, env
 		}));
 	}
 	//loop through the stacks and upgrade those that match
-	const rancherEnviorments = yield when.all( envRequests );
+	const rancherEnviorments = yield Promise.all( envRequests );
 	const upgraded = [];
 	for (let i = 0; i < rancherEnviorments.length; i++) {
 		const upgradedStacks = [];

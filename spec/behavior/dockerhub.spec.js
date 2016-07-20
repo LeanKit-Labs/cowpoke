@@ -1,6 +1,6 @@
 require( "../setup" );
 var proxyquire = require( "proxyquire" ).callThru();
-var when = require( "when" );
+var Promise = require("bluebird");
 var nock = require( "nock" );
 var urlencode = require( "urlencode" );
 var rp = require( "request-promise" );
@@ -33,11 +33,11 @@ var dockerhub = proxyquire( "../../src/dockerhub", {
 	},
 	"request-promise": function( options ) {
 		if ( options.uri.indexOf( "auth.docker.io" ) !== -1 ) {
-			return when.resolve( {
+			return Promise.resolve( {
 				token: "good to go"
 			} );
 		} else {
-			return when.resolve( {
+			return Promise.resolve( {
 				tags: [ "tag", tagToCheck, "tag2", "tag3", "tag4" ]
 			} );
 		}

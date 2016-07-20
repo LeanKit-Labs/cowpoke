@@ -7,11 +7,11 @@ const format = require( "util" ).format;
 const uri = "https://registry.hub.docker.com/v2/%s/%s/tags/list";
 const authUri = "https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s/%s:pull";
 
-const checkTag = promise.coroutine( function* ( user, pass, namesapce, name, target ) {
+const checkTag = promise.coroutine( function* ( user, pass, namespace, name, target ) {
 
 	//authenticate
 	const token = yield rp( {
-		uri: format( authUri, urlencode( namesapce ), urlencode( name ) ),
+		uri: format( authUri, urlencode( namespace ), urlencode( name ) ),
 		json: true,
 		headers: {
 			Authorization: "Basic " + new Buffer( user + ":" + pass ).toString( "base64" )
@@ -20,7 +20,7 @@ const checkTag = promise.coroutine( function* ( user, pass, namesapce, name, tar
 
 	//get tags
 	const tags = yield rp({
-		uri: format( uri, urlencode( namesapce ), urlencode( name ) ),
+		uri: format( uri, urlencode( namespace ), urlencode( name ) ),
 		json: true,
 		headers: {
 			Authorization: "Bearer " + token
