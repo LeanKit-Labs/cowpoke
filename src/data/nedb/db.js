@@ -1,7 +1,6 @@
 const _ = require( "lodash" );
 const path = require( "path" );
-const when = require( "when" );
-const nodeWhen = require( "when/node" );
+const Promise = require("bluebird");
 const Datastore = require( "nedb" );
 const config = require( "configya" )( {
 	nedb: {
@@ -15,32 +14,24 @@ function count( api, pattern ) {
 
 function fetch( api, pattern, map, continuation ) {
 	continuation = continuation || {sort: {}};
-	map = map || function( x ) {
-		return x;
-	};
-	const apply = function( list ) {
-		return _.map( list, map );
-	};
+	map = map || (x => x);
 	const op = api.raw.find( pattern ).sort( continuation.sort );
-	const promise = nodeWhen.apply( op.exec.bind( op ) );
-	return when.try( apply, promise );
+	const promise = Promise.promisify( op.exec.bind( op ) )().then(list => {
+		return _.map( list, map )
+	});
+	return promise//Promise.try( promise );
 }
 
 function fetchPage( api, pattern, map, continuation ) {
-	map = map || function( x ) {
-		return x;
-	};
+	map = map || (x => x);
 	const limit = continuation.limit ? continuation.limit : continuation;
 	const pageIndex = continuation.page ? continuation.page : 1;
 	const skipCount = ( pageIndex - 1 ) * limit;
 	const sort = continuation.sort || {};
-	const apply = function( list ) {
-		return _.map( list, map );
-	};
 	const op = api.raw.find( pattern ).sort( sort ).skip( skipCount ).limit( limit );
-	const promise = nodeWhen.apply( op.exec.bind( op ) );
-	return when.try( apply, promise )
-		.then( function( data ) {
+	const promise = Promise.promisify( op.exec.bind( op ) )().then( list => _.map( list, map ));
+	return Promise.try( promise )
+		.then( data => {
 			data.continuation = {limit: limit, page: pageIndex, sort: sort};
 			data.continuation.page++;
 			return data;
@@ -72,11 +63,11 @@ function upsert( api, pattern, doc ) {
 function wrap( db ) {
 	return {
 		raw: db,
-		count: nodeWhen.lift( db.count ).bind( db ),
-		find: nodeWhen.lift( db.find ).bind( db ),
-		insert: nodeWhen.lift( db.insert ).bind( db ),
-		remove: nodeWhen.lift( db.remove ).bind( db ),
-		update: nodeWhen.lift( db.update ).bind( db )
+		count: Promise.promisify( db.count ).bind( db ),
+		find: Promise.promisify( db.find ).bind( db ),
+		insert: Promise.promisify( db.insert ).bind( db ),
+		remove: Promise.promisify( db.remove ).bind( db ),
+		update: Promise.promisify( db.update ).bind( db )
 	};
 }
 
