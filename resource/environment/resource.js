@@ -1,5 +1,6 @@
 
 var integration = require( "./integration" );
+var stackUpgrade = require( "./stackUpgrade" );
 var _ = require( "lodash" );
 var when = require( "when" );
 var rancherFn = require( "../../src/rancher" );
@@ -14,7 +15,7 @@ function checkAuth( envelope, next ) {
 	}
 }
 
-module.exports = function( host, environment, slack ) {
+module.exports = function( host, environment, slack, github ) {
 	return {
 		name: "environment",
 		middleware: [ checkAuth ],
@@ -38,6 +39,11 @@ module.exports = function( host, environment, slack ) {
 				url: "/:environment",
 				method: "PATCH",
 				handle: integration.configure
+			},
+			upgradeStack: {
+				url: "/catalog",
+				method: "POST",
+				handle: stackUpgrade.bind( null, slack, github )
 			},
 			upgrade: {
 				url: "/:image",

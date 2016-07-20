@@ -6,6 +6,8 @@ var format = require( "util" ).format;
 var environment = require( "../../src/data/nedb/environment" );
 var util = require( "../../src/util" );
 var dockerhub = require( "../../src/dockerhub" );
+var rp = require( "request-promise" );
+
 var statusIntervals = {};
 var pendingUpgrade = {};
 
@@ -44,7 +46,6 @@ function createServiceChecks( env, slack, services, channels ) {
 		}
 	} );
 }
-
 function onFailure( err ) {
 	return {
 		data: {
@@ -111,7 +112,7 @@ function onUpgradeError( name, error ) {
 		status: 500,
 		data: {
 			error: error.stack,
-			message: "An error occurred during upgrade of environment '" + name + "'"
+			message: "An error occurred during upgrade of environment \"" + name + "\""
 		}
 	};
 }
@@ -177,7 +178,7 @@ function onReadError( error ) {
 	return {
 		status: 404,
 		data: {
-			message: "Unable to get information for environment '" + name + "'"
+			message: "Unable to get information for environment \"" + name + "\""
 		}
 	};
 }

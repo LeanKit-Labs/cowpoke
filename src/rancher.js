@@ -4,6 +4,7 @@ var semver = require( "semver" );
 var urlLib = require( "url" );
 var util = require( "./util" );
 var when = require( "when" );
+var poll = require( "when/poll" );
 //var log = console.log;
 
 function get( url, credentials, path ) {
@@ -87,23 +88,41 @@ function listServices( http, serviceUrl, environment, stack ) {
 		.then( onList, onError );
 }
 
+function upgradeStack( http, stack, template ) {
+	return http.post( stack.actions.upgrade, {
+		externalId: stack.externalId.substring( 0, stack.externalId.lastIndexOf( ":" ) - 1 ) + template.version,
+		dockerCompose: template["docker-compose.yml"],
+		rancherCompose: template["rancher-compose.yml"],
+		environment: stack.environment
+	} ).then( poll.bind( null, function() {
+		return http.get( stack.links.self, {} );
+	}, 500, function( stack ) {
+		return stack.state === "upgraded";
+	} ) ).then( function( stack ) {
+		return http.post( stack.actions.finishupgrade, {} );
+	} );
+}
+
+function listStackServices( http, stack ) {
+	return http.get( stack.links.services, {} ).then( function( res ) {
+		return _.reduce( res.data, function( result, value ) {
+			if ( value.kind === "service" ) {
+				result.push( parseService( value, http, "", "" ) ) ;
+			}
+			return result;
+		}, [] );
+	} );
+}
+
 function listStacks( http, stackUrl, environment ) {
 	function onList( result ) {
 		var data = result.data;
-		return _.reduce( data, function( acc, stack ) {
-			acc[ stack.name ] = {
-				id: stack.id,
-				name: stack.name,
-				environmentId: stack.accountId,
-				environmentName: environment,
-				description: stack.description,
-				state: stack.state,
-				listServices: listServices.bind( null, http, stack.links.services, environment, stack.name )
-			};
-			return acc;
-		}, {} );
+		for ( var i = 0; i < data.length; i++ ) {
+			data[i].upgrade = upgradeStack.bind( null, http, data[i] );
+			data[i].listServices = listStackServices.bind( null, http, data[i] );
+		}
+		return data;
 	}
-
 	function onError( error ) {
 		return error;
 	}
