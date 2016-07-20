@@ -2,14 +2,13 @@ const _ = require( "lodash" );
 const request = require( "request" );
 const urlLib = require( "url" );
 const util = require( "./util" );
-const when = require( "when" );
 const Promise = require("bluebird");
 
 
 function get( url, credentials, path ) {
 	let route = /$http(s)?[:]/.test( path ) ?
 		path : urlLib.resolve( url, path );
-	return when.promise( ( resolve, reject ) => {
+	return new Promise( (resolve, reject ) => {
 		function onResult( err, result ) {
 			if ( err ) {
 				reject( err );
@@ -25,7 +24,7 @@ function get( url, credentials, path ) {
 function post( url, credentials, path, body ) {
 	const route = /$http(s)?[:]/.test( path ) ?
 		path : urlLib.resolve( url, path );
-	return when.promise( ( resolve, reject ) => {
+	return new Promise( ( resolve, reject ) => {
 		request( {
 			url: route,
 			method: "POST",
@@ -153,7 +152,7 @@ function upgradeAll( http, environment, dockerImage ) {
 		.then( list => _.filter( list, service => util.shouldUpgrade( service, newInfo )), () => [] )
 		.then( list => {
 			if ( list.length > 0 ) {
-				return when.all( _.map( list,  service => service.upgrade( dockerImage )) );
+				return Promise.all( _.map( list,  service => service.upgrade( dockerImage )) );
 			} else {
 				return [];
 			}
@@ -174,7 +173,7 @@ function upgradeService( http, upgradeUrl, service, environment, stack, dockerIm
 		return http.post( upgradeUrl, body )
 			.then( result => parseService( result, http, environment, stack ), error => error );
 	} else {
-		return when( {upgraded: false, service: service} );
+		return Promise( {upgraded: false, service: service} );
 	}
 }
 

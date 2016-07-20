@@ -1,14 +1,13 @@
 require( "../setup" );
 var proxyquire = require( "proxyquire" ).callThru();
-var when = require( "when" );
+var Promise = require("bluebird");
 /* global expect */
 function finishUp() {
 	return Promise.resolve( {} );
 }
 
 function upgradeMock() {
-	var promiseGen = when.defer();
-	promiseGen.resolve( [{
+	return Promise.resolve( [{
 		id: "svc0102",
 		name: "Service 02",
 		environmentId: "l0l",
@@ -39,15 +38,12 @@ function upgradeMock() {
 			error: false
 		}
 	}] );
-	return promiseGen.promise;
 }
 
 function rancherMock() {
-	var promisGenerator = when.defer();
-	promisGenerator.resolve( {
+	return Promise.resolve( {
 		listEnvironments: listEnvironmentsMock
 	} );
-	return promisGenerator.promise;
 }
 
 var dockerMock = {
@@ -67,8 +63,7 @@ var dockerMockError = {
 };
 
 function getAllEnvMock() {
-	var promisGen = when.defer();
-	promisGen.resolve( [{
+	return Promise.resolve( [{
 		name: "test",
 		baseUrl: "http://example.com",
 		_id: "VoKtrtXdqRS3VDAV",
@@ -76,12 +71,10 @@ function getAllEnvMock() {
 		key: "key",
 		secret: "secret"
 	}] );
-	return promisGen.promise;
 }
 
 function getEnvMock() {
-	var promisGen = when.defer();
-	promisGen.resolve( {
+	return Promise.resolve( {
 		name: "test",
 		baseUrl: "http://example.com",
 		_id: "VoKtrtXdqRS3VDAV",
@@ -90,17 +83,12 @@ function getEnvMock() {
 		secret: "secret",
 		slackChannels: channelsList
 	} );
-	return promisGen.promise;
 }
 
 var channelsList = ["TEST1", "TEST2"];
 
 function getChannelsMock() {
-	var promisGen = when.defer();
-	promisGen.resolve(
-	channelsList
-	);
-	return promisGen.promise;
+	 return Promise.resolve(channelsList);
 }
 
 var service = {
@@ -136,14 +124,11 @@ var service = {
 };
 
 function mockListServices() {
-	var promisGen = when.defer();
-	promisGen.resolve( [service] );
-	return promisGen.promise;
+	return Promise.resolve( [service] );
 }
 
 function listEnvironmentsMock() {
-	var promiseGen = when.defer();
-	promiseGen.resolve( {
+	return Promise.resolve( {
 		Test: {
 			id: "l0l",
 			name: "Test",
@@ -154,7 +139,6 @@ function listEnvironmentsMock() {
 			upgrade: upgradeMock
 		}
 	} );
-	return promiseGen.promise;
 }
 
 var envMock = {
