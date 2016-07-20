@@ -57,7 +57,7 @@ function getImageInfo( image ) {
 
 const shouldUpgradeStack = Promise.coroutine(function* ( stack, newInfo ) {
 	let services = yield stack.listServices();
-	for (var i = 0; i < services.length; i++) {
+	for (let i = 0; i < services.length; i++) {
 		if (shouldUpgrade(services[i], newInfo)) {
 			return true;
 		}
