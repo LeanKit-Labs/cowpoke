@@ -11,5 +11,9 @@
 	"github": {
 		"token": "",
 		"owner": ""
+	},
+	"docker": {
+		"user": null,
+		"pass": null
 	}
 }

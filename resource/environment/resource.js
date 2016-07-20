@@ -1,5 +1,6 @@
 
 var integration = require( "./integration" );
+var stackUpgrade = require( "./stackUpgrade" );
 var _ = require( "lodash" );
 var when = require( "when" );
 var rancherFn = require( "../../src/rancher" );
@@ -42,7 +43,7 @@ module.exports = function( host, environment, slack, github ) {
 			upgradeStack: {
 				url: "/catalog",
 				method: "POST",
-				handle: integration.upgradeStack.bind( null, slack, github )
+				handle: stackUpgrade.bind( null, slack, github )
 			},
 			upgrade: {
 				url: "/:image",
