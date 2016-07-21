@@ -349,12 +349,12 @@ const upgradeStack = Promise.coroutine(function* ( slack, dockerhub, github, env
 		}));
 	}
 	//loop through the stacks and upgrade those that match
-	const rancherEnviorments = yield Promise.all( envRequests );
+	const rancherEnvironments = yield Promise.all( envRequests );
 	const upgraded = [];
-	for (let i = 0; i < rancherEnviorments.length; i++) {
+	for (let i = 0; i < rancherEnvironments.length; i++) {
 		const upgradedStacks = [];
 		const channels = yield environment.getChannels();
-		const stacks = yield rancherEnviorments[i].listStacks();
+		const stacks = yield rancherEnvironments[i].listStacks();
 		for ( let j = 0; j < stacks.length; j++ ) {
 			const shouldUpgrade = yield util.shouldUpgradeStack( stacks[j], info );
 			if (shouldUpgrade) {
@@ -362,18 +362,18 @@ const upgradeStack = Promise.coroutine(function* ( slack, dockerhub, github, env
 					name: stacks[j].name,
 					id: stacks[j].id 
 				});
-				sendMessage(slack, channels, "starting upgrade of stack " + stacks[j].name + " in " + rancherEnviorments[i].name);
+				sendMessage(slack, channels, "starting upgrade of stack " + stacks[j].name + " in " + rancherEnvironments[i].name);
 				stacks[j].upgrade(template).then( 
-					() => sendMessage(slack, channels, "finished upgrade of stack " + stacks[j].name + " in " + rancherEnviorments[i].name)
+					() => sendMessage(slack, channels, "finished upgrade of stack " + stacks[j].name + " in " + rancherEnvironments[i].name)
 				).catch( error => {
-					console.error("error incountered while trying to upgrade stack ", stacks[j].name, " in ", rancherEnviorments[i].name, ": ", error);
-					sendMessage(slack, channels, "there was an error during upgrade of stack " + stacks[j].name + " in " + rancherEnviorments[i].name + ".");
+					console.error("error incountered while trying to upgrade stack ", stacks[j].name, " in ", rancherEnvironments[i].name, ": ", error);
+					sendMessage(slack, channels, "there was an error during upgrade of stack " + stacks[j].name + " in " + rancherEnvironments[i].name + ".");
 				});
 			}
 		}
 		if (upgradedStacks.length !== 0) {
 			upgraded.push( {
-				environment: rancherEnviorments[i].name,
+				environment: rancherEnvironments[i].name,
 				upgraded: upgradedStacks
 			});
 		}
