@@ -344,7 +344,7 @@ const upgradeStack = Promise.coroutine(function* ( slack, dockerhub, github, env
 		.then( rancher => rancher.listEnvironments())
 		.then(environments => environments[_.keys( environments )[0]])
 		.catch(error => {
-			console.log("error while trying to connect to " + storedEnviorments[i].name, ": ", error);
+			console.log("error while trying to connect to " + storedEnvironments[i].name, ": ", error);
 			return [];
 		}));
 	}
