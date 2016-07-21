@@ -1,0 +1,46 @@
+{
+    "env": {
+        "es6": true,
+        "node": true,
+        "mocha": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 6,
+        "sourceType": "module"
+    },
+    "rules": {
+        "indent": [
+            "error",
+            "tab"
+        ],
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "quotes": [
+            "error",
+            "double"
+        ],
+        "no-console": 0,
+        "semi": [
+            "error",
+            "always"
+        ],
+        "block-scoped-var": 2,
+        "curly": 2,
+        "yoda": 2,
+        "array-bracket-spacing": 2,
+        "block-spacing": 2,
+        "brace-style": 2,
+        "camelcase": 2,
+        "comma-style": 2,
+        "computed-property-spacing": 2,
+        "eol-last": 2,
+        "key-spacing": 2,
+        "keyword-spacing": 2,
+        "no-lonely-if": 2,
+        "object-curly-spacing": 2,
+        "eqeqeq": 2
+    }
+}

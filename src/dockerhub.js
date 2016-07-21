@@ -1,85 +1,47 @@
-var rp = require( "request-promise" );
-var urlencode = require( "urlencode" );
-var when = require( "when" );
-var parallel = require( "when/parallel" );
-var util = require( "./util" );
-var format = require( "util" ).format;
+const rp = require( "request-promise" );
+const urlencode = require( "urlencode" );
+const promise = require( "bluebird" );
+const util = require( "./util" );
+const format = require( "util" ).format;
 
-var uri = "https://registry.hub.docker.com/v1/repositories/%s/%s/tags";
+const uri = "https://registry.hub.docker.com/v2/%s/%s/tags/list";
+const authUri = "https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s/%s:pull";
 
-function onRequest( body ) {
-	return body;
-}
+const checkTag = promise.coroutine( function* ( user, pass, namespace, name, target ) {
 
-function onError( err ) {
-	console.error( "There was an error checking a tags existance on docker hub. Request Error: ", err.message );
-	return undefined;
-}
-
-function find ( data, valueToFind, foundToken ) {
-	for ( var element in data ) {
-		if ( foundToken.found ) {
-			break;
-		} else if ( data[element].name === valueToFind) {
-			foundToken.found = true;
-			return true;
-		}
-	}
-	return false;
-}
-
-function findParallel( data, valueToFind, chunkSize ) {
-	var numTasks = ( data.length / chunkSize );
-	var tasks = [];
-
-	var chunkStart = 0;
-	var chunkEnd = chunkSize;
-
-	for ( var i = 0; i < numTasks; i++ ) {
-		var chunk = data.slice( chunkStart, chunkEnd );
-		tasks.push( find.bind( null, chunk ) );
-		chunkStart = chunkStart + chunkSize;
-		chunkEnd = chunkEnd + chunkSize;
-	}
-	return parallel( tasks, valueToFind, { found: false } ).then( function( results ) {
-		for ( var res in results ) {
-			if ( results[res] ) {
-				return true;
-			}
-		}
-		return false;
-	} );
-}
-
-function listTags( namesapce, name ) {
-	var options = {
-		uri: format( uri, urlencode( namesapce ), urlencode( name ) ),
+	//authenticate
+	const token = yield rp( {
+		uri: format( authUri, urlencode( namespace ), urlencode( name ) ),
 		json: true,
 		headers: {
-			Authorization: "Basic " + new Buffer( process.env.DOCKER_USER + ":" + process.env.DOCKER_PASS ).toString( "base64" )
+			Authorization: "Basic " + new Buffer( user + ":" + pass ).toString( "base64" )
 		}
+	} ).then(res => res.token).catch( () => undefined );
+
+	//get tags
+	const tags = yield rp({
+		uri: format( uri, urlencode( namespace ), urlencode( name ) ),
+		json: true,
+		headers: {
+			Authorization: "Bearer " + token
+		}
+	}).then(res => res.tags).catch( () => undefined );
+
+	const arrayFound = tags.filter( function( item ) {
+		return item === target;
+	});
+
+	return arrayFound.length !== 0;
+
+});
+
+function checkExistance( user, pass, image ) {
+	const info = util.getImageInfo( image );
+	return checkTag( user, pass, info.docker.repo, info.docker.image, info.docker.tag);
+}
+
+module.exports = function setup(user, pass){
+	return {
+		checkExistance: checkExistance.bind(null, user, pass)
 	};
-	return rp( options ).then( onRequest, onError ).catch( onError );
-}
-
-function checkExistance( image ) {
-	var info = util.getImageInfo( image );
-	return listTags( info.docker.repo, info.docker.image ).then( function( tags ) {
-		if ( tags ) {
-			if ( tags.length >= 16 ) {
-				return findParallel( tags, info.docker.tag, Math.ceil( tags.length / 16 ) );
-			} else {
-				var arrayFound = tags.filter( function( item ) {
-					return item.name === info.docker.tag;
-				} );
-				return arrayFound.length !== 0;
-			}
-		} else {
-			return undefined;
-		}
-	} );
-}
-
-module.exports = {
-	checkExistance: checkExistance
 };

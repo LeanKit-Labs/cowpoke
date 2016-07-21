@@ -1,15 +1,14 @@
-var _ = require( "lodash" );
-var request = require( "request" );
-var semver = require( "semver" );
-var urlLib = require( "url" );
-var util = require( "./util" );
-var when = require( "when" );
-//var log = console.log;
+const _ = require( "lodash" );
+const request = require( "request" );
+const urlLib = require( "url" );
+const util = require( "./util" );
+const Promise = require("bluebird");
+
 
 function get( url, credentials, path ) {
-	var route = /$http(s)?[:]/.test( path ) ?
+	let route = /$http(s)?[:]/.test( path ) ?
 		path : urlLib.resolve( url, path );
-	return when.promise( function( resolve, reject ) {
+	return new Promise( (resolve, reject ) => {
 		function onResult( err, result ) {
 			if ( err ) {
 				reject( err );
@@ -23,32 +22,31 @@ function get( url, credentials, path ) {
 }
 
 function post( url, credentials, path, body ) {
-	var route = /$http(s)?[:]/.test( path ) ?
+	const route = /$http(s)?[:]/.test( path ) ?
 		path : urlLib.resolve( url, path );
-	return when.promise( function( resolve, reject ) {
-		function onResult( err, result ) {
+	return new Promise( ( resolve, reject ) => {
+		request( {
+			url: route,
+			method: "POST",
+			json: true,
+			headers: {"content-type": "application/json"},
+			body: body
+		}, ( err, result ) => {
 			if ( err ) {
 				reject( err );
 			} else {
 				resolve( result.body );
 			}
-		}
-		request( {
-			url: route,
-			method: "POST",
-			json: true,
-			headers: { "content-type": "application/json" },
-			body: body
-		}, onResult )
-			.auth( credentials.key, credentials.secret );
+		} )
+		.auth( credentials.key, credentials.secret );
 	} );
 }
 
 function listEnvironments( http, actions ) {
-	function onList( result ) {
-		var data = result.data;
-		return _.reduce( data, function( acc, environment ) {
-			var obj = {
+	return http.get( actions.projects ).then( result => {
+		const data = result.data;
+		return _.reduce( data, ( acc, environment ) => {
+			const obj = {
 				id: environment.id,
 				name: environment.name,
 				state: environment.state,
@@ -57,74 +55,69 @@ function listEnvironments( http, actions ) {
 				listServices: listServices.bind( null, http, environment.links.services, environment.name, "" )
 			};
 			obj.upgrade = upgradeAll.bind( null, http, obj );
-			acc[ environment.name ] = obj;
+			acc[environment.name] = obj;
 			return acc;
 		}, {} );
-	}
-
-	function onError( error ) {
-		return error;
-	}
-	return http.get( actions.projects )
-		.then( onList, onError );
+	}, error => error );
 }
 
 function listServices( http, serviceUrl, environment, stack ) {
-	function onList( result ) {
-		var data = result.data;
-		return _.reduce( data, function( acc, service ) {
-			if ( service.type == "service" ) {
-				acc[ service.id ] = parseService( service, http, environment, stack );
+	return http.get( serviceUrl ).then( result => {
+		const data = result.data;
+		return _.reduce( data, ( acc, service ) => {
+			if ( service.type === "service" ) {
+				acc[service.id] = parseService( service, http, environment, stack );
 			}
 			return acc;
 		}, {} );
-	}
-
-	function onError( error ) {
-		return error;
-	}
-	return http.get( serviceUrl )
-		.then( onList, onError );
+	}, error => error );
 }
 
-function listStacks( http, stackUrl, environment ) {
-	function onList( result ) {
-		var data = result.data;
-		return _.reduce( data, function( acc, stack ) {
-			acc[ stack.name ] = {
-				id: stack.id,
-				name: stack.name,
-				environmentId: stack.accountId,
-				environmentName: environment,
-				description: stack.description,
-				state: stack.state,
-				listServices: listServices.bind( null, http, stack.links.services, environment, stack.name )
-			};
-			return acc;
-		}, {} );
-	}
+const upgradeStack = Promise.coroutine(function*(http, stack, template) {
+	let newStack = yield http.post( stack.actions.upgrade, {
+		externalId: stack.externalId.substring( 0, stack.externalId.lastIndexOf( ":" ) - 1 ) + template.version,
+		dockerCompose: template["docker-compose.yml"],
+		rancherCompose: template["rancher-compose.yml"],
+		environment: stack.environment
+	});
 
-	function onError( error ) {
-		return error;
+	while (newStack.state !== "upgraded") {
+		yield Promise.delay(500);
+		newStack = yield http.get( stack.links.self, {} );
 	}
-	return http.get( stackUrl )
-		.then( onList, onError );
+	newStack = yield http.post( newStack.actions.finishupgrade, {} );
+
+	return newStack;
+});
+
+function listStackServices(http, stack) {
+	return http.get(stack.links.services, {}).then( res => {
+		return _.reduce(res.data, (result, value) => {
+			if (value.kind === "service") {
+				result.push(parseService(value, http, "", ""));
+			}
+			return result;
+		}, []);
+	});
+};
+
+function listStacks( http, stackUrl) {
+	return http.get( stackUrl ).then( result => {
+		const data = result.data;
+		for ( let i = 0; i < data.length; i++ ) {
+			data[i].upgrade = upgradeStack.bind( null, http, data[i] );
+			data[i].listServices = listStackServices.bind(null, http, data[i]);
+		}
+		return data;
+	}, error => error );
 }
 
 function finishUpgrade( http, finishURL, service, environment, stack ) {
-	function onList( result ) {
-		return parseService( result, http, environment, stack );
-	}
-
-	function onError( error ) {
-		return error;
-	}
-
-	return http.post( finishURL, {} ).then( onList, onError );
+	return http.post( finishURL, {} ).then( result => parseService( result, http, environment, stack ), error => error );
 }
 
 function parseService( service, http, environment, stack ) {
-	var definition = {
+	const definition = {
 		id: service.id,
 		name: service.name,
 		environmentId: service.accountId,
@@ -154,71 +147,44 @@ function parseService( service, http, environment, stack ) {
 }
 
 function upgradeAll( http, environment, dockerImage ) {
-	var newInfo = util.getImageInfo( dockerImage );
-
-	function onServices( list ) {
-		return _.filter( list, function( service ) {
-			return util.shouldUpgrade( service, newInfo );
-		} );
-	}
-
-	function onServiceError( err ) {
-		return [];
-	}
-
-	function onStacksError( err ) {
-		return [];
-	}
-
-	function upgradeAffectedServices( list ) {
-		if ( list.length > 0 ) {
-			return when.all( _.map( list, function( service ) {
-				return service.upgrade( dockerImage );
-			} ) );
-		} else {
-			return [];
-		}
-	}
-
+	const newInfo = util.getImageInfo( dockerImage );
 	return environment.listServices()
-        .then( onServices, onServiceError )
-        .then( upgradeAffectedServices );
+		.then( list => _.filter( list, service => util.shouldUpgrade( service, newInfo )), () => [] )
+		.then( list => {
+			if ( list.length > 0 ) {
+				return Promise.all( _.map( list,  service => service.upgrade( dockerImage )) );
+			} else {
+				return [];
+			}
+		});
 }
 
 function upgradeService( http, upgradeUrl, service, environment, stack, dockerImage ) {
-	function onList( result ) {
-		return parseService( result, http, environment, stack );
-	}
-
-	function onError( error ) {
-		return error;
-	}
 	if ( util.shouldUpgrade( service, util.getImageInfo( dockerImage ) ) ) {
-		var newLaunchConfig = _.cloneDeep( service.launchConfig );
+		const newLaunchConfig = _.cloneDeep( service.launchConfig );
 		newLaunchConfig.imageUuid = "docker:" + dockerImage;
-		var body = {
+		const body = {
 			inServiceStrategy: {
 				launchConfig: newLaunchConfig,
 				secondaryLaunchConfig: service.secondaryLaunchConfig,
 				startFirst: false
 			}
 		};
-
 		return http.post( upgradeUrl, body )
-			.then( onList, onError );
+			.then( result => parseService( result, http, environment, stack ), error => error );
 	} else {
-		return when( { upgraded: false, service: service } );
+		return Promise( {upgraded: false, service: service} );
 	}
 }
 
 function init( url, credentials ) {
-	var actions = {};
-	var http = {
+	let actions = {};
+	const http = {
 		get: get.bind( null, url, credentials ),
 		post: post.bind( null, url, credentials )
 	};
 	return http.get( "v1" )
-		.then( function( metadata ) {
+		.then(  metadata => {
 			actions = metadata.links;
 			return {
 				listEnvironments: listEnvironments.bind( null, http, actions )

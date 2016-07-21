@@ -1,12 +1,10 @@
-var RtmClient = require( "@slack/client" ).RtmClient;
-var CLIENT_EVENTS = require( "@slack/client" ).CLIENT_EVENTS;
-var RTM_EVENTS = require( "@slack/client" ).RTM_EVENTS;
-var RTM_CLIENT_EVENTS = require( "@slack/client" ).CLIENT_EVENTS.RTM;
-var MemoryDataStore = require( "@slack/client" ).MemoryDataStore;
+const RtmClient = require( "@slack/client" ).RtmClient;
+const CLIENT_EVENTS = require( "@slack/client" ).CLIENT_EVENTS;
+const MemoryDataStore = require( "@slack/client" ).MemoryDataStore;
 
 function send( rtm, name, message ) {
-	var id = rtm.dataStore.getChannelByName( name ).id;
-	rtm.sendMessage( message, id, function( err ) {
+	const id = rtm.dataStore.getChannelByName( name ).id;
+	rtm.sendMessage( message, id,  err  => {
 		if ( err ) {
 			console.error( err );
 		}
@@ -21,7 +19,7 @@ module.exports = function( token ) {
 		};
 	}
 
-	var rtm = new RtmClient( token, {
+	const rtm = new RtmClient( token, {
 		// Sets the level of logging we require
 		logLevel: "warn",
 		// Initialise a data store for our client, this will load additional helper functions for the storing and retrieval of data
@@ -32,20 +30,20 @@ module.exports = function( token ) {
 		autoMark: true
 	} );
 
-	rtm.on( CLIENT_EVENTS.RTM.AUTHENTICATED, function( rtmStartData ) {
+	rtm.on( CLIENT_EVENTS.RTM.AUTHENTICATED, rtmStartData => {
 		console.log( "Logged in as " + rtmStartData.self.name + " of team " + rtmStartData.team.name + ", but not yet connected to a channel" );
 	} );
-	rtm.on( CLIENT_EVENTS.RTM.DISCONNECT, function( data ) {
+	rtm.on( CLIENT_EVENTS.RTM.DISCONNECT,  () => {
 		console.warn( "Disconnected from slack" );
 		rtm.reconnect();
 	} );
-	rtm.on( CLIENT_EVENTS.RTM.ATTEMPTING_RECONNECT, function( data ) {
+	rtm.on( CLIENT_EVENTS.RTM.ATTEMPTING_RECONNECT, () => {
 		console.warn( "Attempting reconnect to slack" );
 	} );
-	rtm.on( CLIENT_EVENTS.RTM.WS_ERROR, function( data ) {
+	rtm.on( CLIENT_EVENTS.RTM.WS_ERROR, () => {
 		console.error( "Slack Error" );
 	} );
-	rtm.on( CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, function( data ) {
+	rtm.on( CLIENT_EVENTS.RTM.RTM_CONNECTION_OPENED, () => {
 		console.log( "Ready to send messages" );
 	} );
 
