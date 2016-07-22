@@ -74,8 +74,10 @@ function listServices( http, serviceUrl, environment, stack ) {
 }
 
 const upgradeStack = Promise.coroutine(function*(http, stack, template) {
+	const idParts = stack.externalId.split("//");
+	const versionInfo = idParts[1].split(":");
 	let newStack = yield http.post( stack.actions.upgrade, {
-		externalId: stack.externalId.substring( 0, stack.externalId.lastIndexOf( ":" ) - 1 ) + template.version,
+		externalId: idParts[0] + "//" + versionInfo[0] + ":" + versionInfo[1] + ":" + template.version,
 		dockerCompose: template["docker-compose.yml"],
 		rancherCompose: template["rancher-compose.yml"],
 		environment: stack.environment
