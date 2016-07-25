@@ -6,7 +6,6 @@ var name = "cowpoke";
 var tagToCheck = "tag1";
 var validImage = namespace + "/" + name + ":" + tagToCheck;
 var invalidImage = namespace + "/" + name + ":DNE";
->>>>>>> origin/feature-to-es6
 var dockerhub = proxyquire( "../../src/dockerhub", {
 	"./util": {
 		getImageInfo: function( image ) {
@@ -61,5 +60,5 @@ describe( "Docker Hub API", function() {
 				return dockerhub.checkExistance( invalidImage ).then( check );
 			} );
 		} );
-} );
-
+	} );
+});
