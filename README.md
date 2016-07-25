@@ -4,17 +4,17 @@
 
 A service to handle configurable rancher service upgrade patterns.
 
-## For your Information
+## For your information
 
-Cowpoke is designed for how we do things here at leanKit and as such it makes certain assumptions about how the development environment around it.
+Cowpoke is designed for how we do things here at leanKit and as such it makes certain assumptions about the development environment around it.
 
 it assumes all tags it will be expected to work with will be formatted by [buildgoggles](https://github.com/arobson/buildgoggles)
 
-It assumes that all of the custom catalogs using in catalog upgrades are under the same github owner.
+It assumes that all of the custom catalogs used in catalog upgrades are under the same github owner.
 
-While not required to run cowpoke, a slack integration is highly recommended as the request response only informs you what upgrades were started, and any information that comes afterwards and only be provided by slack: notably what upgrades were actually finished.
+While not required to run cowpoke, a slack integration is highly recommended as the request response only informs you what upgrades were started, and any information after that comes afterwards and only be provided by slack: notably what upgrades were actually finished.
 
-We do have plans to alleviate these restraints on the roadmap. Service upgrades will be deprecated in favor of catalog upgrades, and the catalog upgrades will eventually take the arguments of the catalog owner on github, the name of the catalog in github, the name of the catalog in rancher, branch, and catalog number.  We hope some time to add support to other messaging clients, and if you have one you would like to add support for one, we would be thrilled to see a PR come in for this. Thank you!
+We do have plans to alleviate these restraints on the roadmap. Service upgrades will be deprecated in favor of catalog upgrades, and the catalog upgrades will eventually take the arguments of the catalog owner on github, the name of the catalog in github, the name of the catalog in rancher, branch, and catalog number. We hope some time to add support to other messaging clients, and if you have one you would like to add support for, we would be thrilled to see a PR come in for this. Thank you!
 
 ## Configuration
 
@@ -30,6 +30,17 @@ Defaults shown below. Empty values mean no default provided.
 	},
 	"slack": {
 		"token": undefined
+	},
+	"docker": {
+		"user": undefined,
+		"pass": undefined
+	},
+	"github": {
+		"token": undefined,
+		"owner": undefined
+	},
+	"api": {
+		"key": undefined
 	}
 }
 ```
@@ -40,6 +51,15 @@ Defaults shown.
  * `HOST_PORT`=8800
  * `NEDB_PATH`="./data"
  * `SLACK_TOKEN`=""
+ * 'DOCKER_USER'=""
+ * 'DOCKER_PASS'=""
+ * 'GITHUB_TOKEN'=""
+ * 'GITHUB_OWNER'=""
+ * 'API_KEY'=""
+
+DOCKER_USER, DOCKER_PASS, GITHUB_OWNER and GITHUB_TOKEN must be defined in order for cowpoke to properly startup.
+
+If API_KEY is defined all requests to cowpoke will use this for authentication and reject any requests without a bearer header that matches the given value.
 
 ## Concepts
 Cowpoke is designed to handle service upgrade patterns for Rancher. Externalizing this allows the implementation behavior to evolve independently from Drone build files - something we feel is key given the number of services we have. It also allows us to externalize things like Rancher credentials as well as managing upgrades that may span multiple Rancher environments and stack definitions.
@@ -126,6 +146,8 @@ __Response__
 
 ### New Image
 
+> Note: will be deprecated in favor of catalog upgrades.
+
 #### `PUT /api/environment/:image`
 
 __Response__
@@ -202,7 +224,7 @@ __Response__
 	]
 }
 ```
-### Catalog uprade
+### Catalog upgrade
 
 #### `POST /api/environment/catalog`
 
