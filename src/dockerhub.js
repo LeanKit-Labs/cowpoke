@@ -17,7 +17,9 @@ const checkTag = promise.coroutine( function* ( user, pass, namespace, name, tar
 			Authorization: "Basic " + new Buffer( user + ":" + pass ).toString( "base64" )
 		}
 	} ).then(res => res.token).catch( () => undefined );
-
+	if (!token) {
+		return undefined;
+	}
 	//get tags
 	const tags = yield rp({
 		uri: format( uri, urlencode( namespace ), urlencode( name ) ),
@@ -26,6 +28,9 @@ const checkTag = promise.coroutine( function* ( user, pass, namespace, name, tar
 			Authorization: "Bearer " + token
 		}
 	}).then(res => res.tags).catch( () => undefined );
+	if (!tags) {
+		return undefined;
+	}
 
 	const arrayFound = tags.filter( function( item ) {
 		return item === target;
