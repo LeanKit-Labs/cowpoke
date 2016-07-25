@@ -250,8 +250,8 @@ __Response__
             "environment": "environment name",
             "upgraded": [
                 {
-                    name: "stack name",
-                    id: "stack id"
+                    "name": "stack name",
+                    "id": "stack id"
                 }
             ]
         }
