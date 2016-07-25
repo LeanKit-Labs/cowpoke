@@ -1,60 +1,52 @@
-var rp = require( "request-promise" );
-var urlencode = require( "urlencode" );
-var util = require( "./util" );
-var format = require( "util" ).format;
+const rp = require( "request-promise" );
+const urlencode = require( "urlencode" );
+const promise = require( "bluebird" );
+const util = require( "./util" );
+const format = require( "util" ).format;
 
-var uri = "https://registry.hub.docker.com/v2/%s/%s/tags/list";
-var authUriu = "https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s/%s:pull";
+const uri = "https://registry.hub.docker.com/v2/%s/%s/tags/list";
+const authUri = "https://auth.docker.io/token?service=registry.docker.io&scope=repository:%s/%s:pull";
 
-function onRequest( body ) {
-	return body;
-}
+const checkTag = promise.coroutine( function* ( user, pass, namespace, name, target ) {
 
-function onError( err ) {
-	console.error( "There was an error checking a tags existance on docker hub. Request Error: ", err.message );
-	return undefined;
-}
-function auth( namesapce, name ) {
-	var options = {
-		uri: format( authUriu, urlencode( namesapce ), urlencode( name ) ),
+	//authenticate
+	const token = yield rp( {
+		uri: format( authUri, urlencode( namespace ), urlencode( name ) ),
 		json: true,
 		headers: {
-			Authorization: "Basic " + new Buffer( process.env.DOCKER_USER + ":" + process.env.DOCKER_PASS ).toString( "base64" )
+			Authorization: "Basic " + new Buffer( user + ":" + pass ).toString( "base64" )
 		}
-	};
-	return rp( options ).then( function( res ) {
-		return res.token;
-	}, onError ).catch( onError );
-}
-
-function listTags( namesapce, name, token ) {
-	var options = {
-		uri: format( uri, urlencode( namesapce ), urlencode( name ) ),
+	} ).then(res => res.token).catch( () => undefined );
+	if (!token) {
+		return undefined;
+	}
+	//get tags
+	const tags = yield rp({
+		uri: format( uri, urlencode( namespace ), urlencode( name ) ),
 		json: true,
 		headers: {
 			Authorization: "Bearer " + token
 		}
+	}).then(res => res.tags).catch( () => undefined );
+	if (!tags) {
+		return undefined;
+	}
+
+	const arrayFound = tags.filter( function( item ) {
+		return item === target;
+	});
+
+	return arrayFound.length !== 0;
+
+});
+
+function checkExistance( user, pass, image ) {
+	const info = util.getImageInfo( image );
+	return checkTag( user, pass, info.docker.repo, info.docker.image, info.docker.tag);
+}
+
+module.exports = function setup(user, pass){
+	return {
+		checkExistance: checkExistance.bind(null, user, pass)
 	};
-
-	return rp( options ).then( function( res ) {
-		return res.tags;
-	}, onError ).catch( onError );
-}
-
-function checkExistance( image ) {
-	var info = util.getImageInfo( image );
-	return auth( info.docker.repo, info.docker.image ).then( listTags.bind( null, info.docker.repo, info.docker.image ) ).then( function( tags ) {
-		if ( tags ) {
-			var arrayFound = tags.filter( function( item ) {
-				return item === info.docker.tag;
-			} );
-			return arrayFound.length !== 0;
-		} else {
-			return undefined;
-		}
-	} );
-}
-
-module.exports = {
-	checkExistance: checkExistance
 };

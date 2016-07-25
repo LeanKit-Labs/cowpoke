@@ -1,21 +1,19 @@
 require( "../setup" );
 var proxyquire = require( "proxyquire" ).callThru();
-var when = require( "when" );
-var nock = require( "nock" );
-var urlencode = require( "urlencode" );
-var rp = require( "request-promise" );
-var namesapce = "leankit";
+var Promise = require("bluebird");
+var namespace = "leankit";
 var name = "cowpoke";
 var tagToCheck = "tag1";
-var validImage = namesapce + "/" + name + ":" + tagToCheck;
-var invalidImage = namesapce + "/" + name + ":DNE";
+var validImage = namespace + "/" + name + ":" + tagToCheck;
+var invalidImage = namespace + "/" + name + ":DNE";
+>>>>>>> origin/feature-to-es6
 var dockerhub = proxyquire( "../../src/dockerhub", {
 	"./util": {
 		getImageInfo: function( image ) {
 			if ( image === validImage ) {
 				return {
 					docker: {
-						repo: namesapce,
+						repo: namespace,
 						image: name,
 						tag: tagToCheck
 					}
@@ -23,7 +21,7 @@ var dockerhub = proxyquire( "../../src/dockerhub", {
 			} else {
 				return {
 					docker: {
-						repo: namesapce,
+						repo: namespace,
 						image: name,
 						tag: "DNE"
 					}
@@ -33,37 +31,34 @@ var dockerhub = proxyquire( "../../src/dockerhub", {
 	},
 	"request-promise": function( options ) {
 		if ( options.uri.indexOf( "auth.docker.io" ) !== -1 ) {
-			return when.resolve( {
+			return Promise.resolve( {
 				token: "good to go"
 			} );
 		} else {
-			return when.resolve( {
-				tags: [ "tag", "tag1", "tag2", "tag3", "tag4", tagToCheck ]
+			return Promise.resolve( {
+				tags: ["tag", tagToCheck, "tag2", "tag3", "tag4"]
 			} );
 		}
 	}
-} );
+} )("my user", "my pass");
 
 describe( "Docker Hub API", function() {
-	var dockerapi;
-	var dockerAuth;
 	describe( "Check for an image?", function() {
-			describe( "Image exists", function() {
-				it( "should find that the image exists", function() {
-					function check( res ) {
-						return res.should.equal( true );
-					}
-					return dockerhub.checkExistance( validImage ).then( check );
-				} );
+		describe( "Image exists", function() {
+			it( "should find that the image exists", function() {
+				function check( res ) {
+					return res.should.equal( true );
+				}
+				return dockerhub.checkExistance( validImage ).then( check );
 			} );
+		} );
 
-			describe( "Image does not exist", function() {
-				it( "should find that the image does not exist", function() {
-					function check( res ) {
-						return res.should.equal( false );
-					}
-					return dockerhub.checkExistance( invalidImage ).then( check );
-				} );
+		describe( "Image does not exist", function() {
+			it( "should find that the image does not exist", function() {
+				function check( res ) {
+					return res.should.equal( false );
+				}
+				return dockerhub.checkExistance( invalidImage ).then( check );
 			} );
 		} );
 } );

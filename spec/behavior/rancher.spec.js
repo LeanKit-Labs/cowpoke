@@ -29,7 +29,7 @@ describe( "Rancher API", function() {
 			rancherHost
 				.get( "/v1/projects" )
 				.reply( 200, {
-					data: [ {
+					data: [{
 						id: "l0l",
 						name: "Test",
 						state: "active", //not mentioned in docs
@@ -38,7 +38,7 @@ describe( "Rancher API", function() {
 							containers: baseURL + "/v1/projects/l0l/containers",
 							services: baseURL + "/v1/projects/l0l/services"
 						}
-					} ]
+					}]
 				} );
 			return rancher.listEnvironments()
 				.then( function( response ) {
@@ -62,7 +62,7 @@ describe( "Rancher API", function() {
 				rancherHost
 									.get( "/v1/projects/l0l/environments" )
 					.reply( 200, {
-						data: [ {
+						data: [{
 							id: "s01",
 							name: "Stack 1",
 							accountId: "l0l",
@@ -71,7 +71,7 @@ describe( "Rancher API", function() {
 							links: {
 								services: baseURL + "/v1/projects/l0l/services"
 							}
-						} ]
+						}]
 					} );
 				rancherHost
 				.get( "/v1/projects/l0l/services" )
@@ -163,7 +163,7 @@ describe( "Rancher API", function() {
 			} );
 
 			it( "should upgrade the correct service", function() {
-				return updated[ 0 ].should.partiallyEql(
+				return updated[0].should.partiallyEql(
 					{
 						id: "svc0103",
 						name: "Service 03",

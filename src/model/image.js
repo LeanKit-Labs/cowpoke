@@ -1,7 +1,7 @@
-var util = require( "../util" );
+const util = require( "../util" );
 
 function getAffectedServices( storage, image ) {
-	var info = util.getImageInfo( image );
+	const info = util.getImageInfo( image );
 	return storage.service.findUpgradableServices( info );
 }
 

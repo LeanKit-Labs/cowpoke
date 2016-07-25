@@ -1,23 +1,22 @@
 
-var integration = require( "./integration" );
-var _ = require( "lodash" );
-var when = require( "when" );
-var rancherFn = require( "../../src/rancher" );
-var format = require( "util" ).format;
+const integration = require( "./integration" );
+const config = require( "configya" )( {
+	file: "./config.json"
+} );
 
 function checkAuth( envelope, next ) {
-	var userKey = envelope.headers.bearer;
-	if ( !process.env.COWPOKE_API_KEY || userKey === process.env.COWPOKE_API_KEY ) {
+	const userKey = envelope.headers.bearer;
+	if ( !config.api.key || userKey === config.api.key ) {
 		return next();
 	} else {
-		return { status: 402, data: { message: "Unauthorized" } };
+		return {status: 402, data: {message: "giit"}};
 	}
 }
 
-module.exports = function( host, environment, slack ) {
+module.exports = function( host, environment, slack, dockerhub, github ) {
 	return {
 		name: "environment",
-		middleware: [ checkAuth ],
+		middleware: [checkAuth],
 		actions: {
 			list: {
 				url: "/",
@@ -39,10 +38,15 @@ module.exports = function( host, environment, slack ) {
 				method: "PATCH",
 				handle: integration.configure
 			},
+			upgradeStack: {
+				url: "/catalog",
+				method: "POST",
+				handle: integration.upgradeStack.bind( null, slack, dockerhub, github )
+			},
 			upgrade: {
 				url: "/:image",
 				method: "PUT",
-				handle: integration.upgrade.bind( null, slack )
+				handle: integration.upgrade.bind( null, slack, dockerhub )
 			}
 		}
 	};

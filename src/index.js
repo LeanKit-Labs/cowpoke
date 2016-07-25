@@ -1,24 +1,32 @@
-var fs = require( "fs" );
-var path = require( "path" );
-var format = require( "util" ).format;
-var hyped = require( "hyped" )( {} );
-var autohost = require( "autohost" );
-var config = require( "configya" )( {
+const hyped = require( "hyped" )( {} );
+const autohost = require( "autohost" );
+const config = require( "configya" )( {
 	file: "./config.json"
 } );
-var fount = require( "fount" );
+const fount = require( "fount" );
 
-if ( !process.env.DOCKER_USER || !process.env.DOCKER_PASS ) {
+if ( !config.docker.user || !config.docker.pass ) {
 	throw new Error( "DOCKER_PASS or DOCKER_USER is not defined" );
 }
+if ( !config.github.token || !config.github.owner ) {
+	throw new Error( "GITHUB_TOKEN or GITHUB_OWNER is not defined" );
+}
 
-var environments = require( "./data/nedb/environment" );
+
+const environments = require( "./data/nedb/environment" );
 fount.register( "environment", environments );
 
-var slack = require( "./slack" )( config.slack.token, environments );
+
+const slack = require( "./slack" )( config.slack.token, environments );
 fount.register( "slack", slack );
 
-var host = hyped.createHost( autohost, {
+const dockerhub = require( "./dockerhub" )(config.docker.user, config.docker.pass);
+fount.register( "dockerhub", dockerhub );
+
+fount.register( "github", config.github );
+
+
+const host = hyped.createHost( autohost, {
 	port: config.host.port,
 	fount: fount,
 	noSession: true,
