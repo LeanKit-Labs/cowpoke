@@ -5,25 +5,32 @@ const config = require( "configya" )( {
 } );
 const fount = require( "fount" );
 
-if ( !config.docker.user || !config.docker.pass ) {
-	throw new Error( "DOCKER_PASS or DOCKER_USER is not defined" );
+if ( !config.docker.user ) {
+	throw new Error( "DOCKER_USER is not defined" );
 }
-if ( !config.github.token || !config.github.owner ) {
-	throw new Error( "GITHUB_TOKEN or GITHUB_OWNER is not defined" );
+
+if ( !config.docker.pass ) {
+	throw new Error( "DOCKER_PASS is not defined" );
+}
+
+if ( !config.github.token ) {
+	throw new Error( "GITHUB_TOKEN is not defined" );
+}
+
+if ( !config.api.key ) {
+	console.warn( "API_KEY not set. No authentication will be used" );
 }
 
 
 const environments = require( "./data/nedb/environment" );
 fount.register( "environment", environments );
 
+fount.register( "key", config.api.key );
 
 const slack = require( "./slack" )( config.slack.token, environments );
 fount.register( "slack", slack );
 
-const dockerhub = require( "./dockerhub" )(config.docker.user, config.docker.pass);
-fount.register( "dockerhub", dockerhub );
-
-fount.register( "github", config.github );
+fount.register( "githubToken", config.github.token );
 
 
 const host = hyped.createHost( autohost, {
