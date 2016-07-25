@@ -4,6 +4,20 @@
 
 A service to handle configurable rancher service upgrade patterns.
 
+## For your Information
+
+Cowpoke is designed for how we do things here at leanKit and as such it makes certain assumptions about how the development environment around it.
+
+it assumes all tags it will be expected to work with will be formatted by [buildgoggles](https://github.com/arobson/buildgoggles)
+
+It assumes that all of the custom catalogs using in catalog upgrades are under the same github owner.
+
+While not required to run cowpoke, a slack integration is highly recommended as the request response only informs you what upgrades were started, and any information that comes afterwards and only be provided by slack: notably what upgrades were actually finished.
+
+We do have plans to alleviate these restraints on the roadmap. Service upgrades will be deprecated in favor of catalog upgrades, and the catalog upgrades will eventually take the arguments of the catalog owner on github, the name of the catalog in github, the name of the catalog in rancher, branch, and catalog number.  We hope some time to add support to other messaging clients, and if you have one you would like to add support for one, we would be thrilled to see a PR come in for this. Thank you!
+
+Note: catalog upgrades are still in a development branch and have not yet come been integrated into master. This should occur within the next few days.
+
 ## Configuration
 
 ### JSON
@@ -188,6 +202,34 @@ __Response__
 			}
 		}
 	]
+}
+```
+### Catalog uprade --In a feature branch and should be in master within a few days
+
+#### `POST /api/environment/catalog`
+
+__Request__
+```json
+{
+    "docker_image": "NAMESPACE/NAME:OWNER_REPO_BRANCH_VERSION_BUILD_COMMIT",
+    "rancher_catalog": "my-catalog-repo-name"
+}
+```
+
+__Response__
+```json
+{
+	"upgraded_stacks_by_environment": [
+        {
+            "environment": "environment name",
+            "upgraded": [
+                {
+                    name: "stack name",
+                    id: "stack id"
+                }
+            ]
+        }
+    ]
 }
 ```
 
