@@ -4,7 +4,7 @@
 
 A service to handle configurable rancher service upgrade patterns.
 
-## For your Information
+## For your information
 
 Cowpoke is designed for how we do things here at leanKit and as such it makes certain assumptions about the development environment around it.
 
