@@ -3,7 +3,6 @@ const request = require( "request" );
 const urlLib = require( "url" );
 const Promise = require("bluebird");
 
-
 function get( url, credentials, path ) {
 	let route = /$http(s)?[:]/.test( path ) ?
 		path : urlLib.resolve( url, path );

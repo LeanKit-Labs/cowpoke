@@ -1,382 +1,218 @@
-require( "../setup" );
-var proxyquire = require( "proxyquire" ).callThru();
-var Promise = require("bluebird");
+require("../setup");
+const proxyquire = require("proxyquire").callThru();
+const Promise = require("bluebird");
+const util = require("util");
+const _ = require("lodash");
 /* global expect */
-function finishUp() {
-	return Promise.resolve( {} );
-}
 
-function upgradeMock() {
-	return Promise.resolve( [{
-		id: "svc0102",
-		name: "Service 02",
-		environmentId: "l0l",
-		environmentName: "Test",
-		stackId: "s01",
-		stackName: "",
-		description: "A test service",
-		state: "active",
-		launchConfig: {
-			imageUuid: "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef"
-		},
-		droneImage: "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
-		buildInfo: {
-			newImage: "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
-			docker: {
-				image: "cowpoke",
-				repo: "arob",
-				tag: "arobson_cowpoke_master_0.1.0_1_abcdef"
-			},
-			owner: "arobson",
-			repository: "cowpoke",
-			branch: "master",
-			version: "0.1.0",
-			build: "1",
-			commit: "abcdef"
-		},
-		transition: {
-			error: false
-		}
-	}] );
-}
 
-function rancherMock() {
-	return Promise.resolve( {
-		listEnvironments: listEnvironmentsMock
-	} );
-}
-
-var dockerMock = {
-	checkExistance: function() {
-		return Promise.resolve( true );
-	}
-};
-var dockerMockDeny = {
-	checkExistance: function() {
-		return Promise.resolve( false );
-	}
-};
-var dockerMockError = {
-	checkExistance: function() {
-		return Promise.resolve( undefined );
-	}
+const env = {
+	name: "test",
+	baseUrl: "http://example.com",
+	_id: "VoKtrtXdqRS3VDAV",
+	image: "helloworld",
+	key: "key",
+	secret: "secret",
+	slackChannels: channelsList
 };
 
-function getAllEnvMock() {
-	return Promise.resolve( [{
-		name: "test",
-		baseUrl: "http://example.com",
-		_id: "VoKtrtXdqRS3VDAV",
-		image: "helloworld",
-		key: "key",
-		secret: "secret"
-	}] );
-}
-
-function getEnvMock() {
-	return Promise.resolve( {
-		name: "test",
-		baseUrl: "http://example.com",
-		_id: "VoKtrtXdqRS3VDAV",
-		image: "helloworld",
-		key: "key",
-		secret: "secret",
-		slackChannels: channelsList
-	} );
-}
-
-var channelsList = ["TEST1", "TEST2"];
-
-function getChannelsMock() {
-	 return Promise.resolve(channelsList);
-}
-
-var service = {
-	id: "svc0102",
-	name: "Service 02",
-	environmentId: "l0l",
-	environmentName: "Test",
-	stackId: "s01",
-	stackName: "",
-	description: "A test service",
-	state: "upgraded",
-	launchConfig: {
-		imageUuid: "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef"
-	}, droneImage: "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
-	buildInfo: {
-		newImage: "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
-		docker: {
-			image: "cowpoke",
-			repo: "arob",
-			tag: "arobson_cowpoke_master_0.1.0_1_abcdef"
-		},
-		owner: "arobson",
-		repository: "cowpoke",
-		branch: "master",
-		version: "0.1.0",
-		build: "1",
-		commit: "abcdef"
+const channelsList = ["TEST1", "TEST2"];
+const envId = "101";
+const stackId = "202";
+const stack = {
+	"id": stackId,
+	"type": "environment",
+	"links": {
+		"self": util.format("/v1/projects/%s/environments/%s", envId, stackId),
+		"account": util.format("/v1/projects/%s/environments/%s/account", envId, stackId),
+		"services": util.format("/v1/projects/%s/environments/%s/services", envId, stackId),
+		"composeConfig": util.format("/v1/projects/%s/environments/%s/composeconfig", envId, stackId),
 	},
-	finish: finishUp,
-	transition: {
-		error: false
-	}
+	"actions": {
+		upgrade: util.format("…/v1/projects/%s/environments/%s/?action=upgrade", envId, stackId),
+		update: util.format("…/v1/projects/%s/environments/%s/?action=update", envId, stackId),
+		remove: util.format("…/v1/projects/%s/environments/%s/?action=remove", envId, stackId),
+		addoutputs: util.format("…/v1/projects/%s/environments/%s/?action=addoutputs", envId, stackId),
+		activateservices: util.format("…/v1/projects/%s/environments/%s/?action=activateservices", envId, stackId),
+		deactivateservices: util.format("…/v1/projects/%s/environments/%s/?action=deactivateservices", envId, stackId),
+		exportconfig: util.format("…/v1/projects/%s/environments/%s/?action=exportconfig", envId, stackId),
+	},
+	"environment": {
+		"argument_one": "abc"
+	},
+	"name": "drone",
+	"state": "active",
+	"dockerCompose": "",
+	"externalId": "catalog://rebelfleet:xwing:65",
+	"kind": "environment",
+	"rancherCompose": "",
+	finish: () => Promise.resolve(stack),
+	upgrade: () => Promise.resolve(stack)
 };
-
-function mockListServices() {
-	return Promise.resolve( [service] );
-}
-
-function listEnvironmentsMock() {
-	return Promise.resolve( {
-		Test: {
-			id: "l0l",
-			name: "Test",
-			state: "active",
-			listStacks: function() {},
-			listContainers: function() {},
-			listServices: mockListServices,
-			upgrade: upgradeMock
-		}
-	} );
-}
 
 var envMock = {
-	add: getEnvMock,
-	getAll: getAllEnvMock,
-	getChannels: getChannelsMock,
-	getByName: getEnvMock
+	add: () => Promise.resolve(env),
+	getAll: () => Promise.resolve([_.omit(env, ["slackChannels"])]),
+	getChannels: () => Promise.resolve(channelsList),
+	getByName: () => Promise.resolve(env)
 };
+
+function rancherMock() {
+	return Promise.resolve({
+		listEnvironments: () => Promise.resolve({
+			Test: {
+				id: envId,
+				name: "Test",
+				state: "active",
+				listStacks: () => Promise.resolve([stack]),
+				listContainers: () => Promise.resolve([]),
+				listServices: () => Promise.resolve([]),
+			}
+		})
+	});
+}
+
 
 var slackMockDoNothing = {
 	send: function() {}
 };
 
-describe( "Upgrade", function() {
-	it( "should return the upgraded services", function( done ) {
-		var expectedReturn = {
-			data: {
-				upgradedServices: [
-					{
-						id: "svc0102",
-						name: "Service 02",
-						environmentId: "l0l",
-						environmentName: "Test",
-						stackId: "s01",
-						stackName: "",
-						description: "A test service",
-						state: "active",
-						launchConfig: {
-							imageUuid: "docker:arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef"
-						},
-						droneImage: "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
-						buildInfo: {
-							newImage: "arob/cowpoke:arobson_cowpoke_master_0.1.0_1_abcdef",
-							docker: {
-								image: "cowpoke",
-								repo: "arob",
-								tag: "arobson_cowpoke_master_0.1.0_1_abcdef"
-							},
-							owner: "arobson",
-							repository: "cowpoke",
-							branch: "master",
-							version: "0.1.0",
-							build: "1",
-							commit: "abcdef"
-						},
-						transition: {
-							error: false
-						}
-					}
-				]
+
+describe("upgradeStack", () => {
+
+	const githubOwner = "lukeSkywalker";
+	const githubRepo = "rougeSquadron";
+	const version = "70";
+	const branch = "xwing";
+
+	const repo = [
+		{
+			name: "docker-compose.yml",
+			download_url: "https://api.github.com/docker" // eslint-disable-line
+		}, 
+		{
+			name: "rancher-compose.yml",
+			download_url: "https://api.github.com/rancher" // eslint-disable-line
+		} 
+	];
+
+	const integration = proxyquire("../../resource/environment/integration.js", {
+		"../../src/rancher": rancherMock,
+		"../../src/data/nedb/environment": envMock,
+		"request-promise": url => {
+			if (url === util.format("https://api.github.com/repos/%s/%s/contents/templates/%s/%s", githubOwner, githubRepo, branch, version)) {
+				return Promise.resolve(repo);
+			} else if (url === "https://api.github.com/docker") {
+				return Promise.resolve("docker compose");
+			} else if (url === "https://api.github.com/rancher") {
+				return Promise.resolve("rancher compose");
+			} else {
+				return Promise.reject("");
 			}
-		};
-		function testResults( result ) {
-			result.should.deep.equal( expectedReturn );
-			done();
 		}
+	});
 
-		var integration = proxyquire( "../../resource/environment/integration.js", {
-			"../../src/rancher": rancherMock,
-			"../../src/data/nedb/environment": envMock,
-			"../../src/dockerhub": dockerMock
-		} );
-		integration.upgrade( slackMockDoNothing, dockerMock, {data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}} ).then( testResults );
-	} );
-	it( "when tag is not found service should return 404", function() {
-		var integration = proxyquire( "../../resource/environment/integration.js", {
-			"../../src/rancher": rancherMock,
-			"../../src/data/nedb/environment": envMock,
-			"../../src/dockerhub": dockerMockDeny
-		} );
-		var expectedReturn = {
+	it("should upgrade the stack", () => {
+		return integration.upgradeStack(slackMockDoNothing, "abc", {
 			data: {
-				message: "Image does not exist in Dockerhub"
-			},
-			status: 404
-		};
-		function testResults( result ) {
-			return result.should.deep.equal( expectedReturn );
-		}
-		return integration.upgrade( slackMockDoNothing,dockerMockDeny, {data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}} ).then( testResults );
-	} );
-	it( "when dockerhub validation fails should return a 401", function() {
-		var integration = proxyquire( "../../resource/environment/integration.js", {
-			"../../src/rancher": rancherMock,
-			"../../src/data/nedb/environment": envMock,
-			"../../src/dockerhub": dockerMockError
-		} );
-		var expectedReturn = {
-			data: {
-				message: "Validation with Dockerhub failed."
-			},
-			status: 401
-		};
-		function testResults( result ) {
-			return result.should.deep.equal( expectedReturn );
-		}
-		return integration.upgrade( slackMockDoNothing, dockerMockError, {data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}} ).then( testResults );
-	} );
-	it( "should call out to slack", function( done ) {
-		var slackMockTest = {
-			send: function( channel, message ) {
-				channelsList.indexOf( channel ).should.not.equal( -1 );
-				if ( channelsList.indexOf( channel ) === ( channelsList.length - 1 ) && message === "Upgrading the following services to arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef, hombre: \n - Service 02" ) {
-					done();
-				}
+				catalog: githubOwner + "/" + githubRepo,
+				rancher_catalog_name: "rebelfleet", // eslint-disable-line
+				branch,
+				catalog_version: version // eslint-disable-line
 			}
-		};
-		var integration = proxyquire( "../../resource/environment/integration.js", {
-			"../../src/rancher": rancherMock,
-			"../../src/data/nedb/environment": envMock,
-			"../../src/dockerhub": dockerMock
-		} );
-		integration.upgrade( slackMockTest, dockerMock, {data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}} );
-	} );
-
-	it( "should finish the upgrade", function( done ) {
-		this.timeout( 10000 );
-		var integration = proxyquire( "../../resource/environment/integration.js", {
-			"../../src/rancher": rancherMock,
-			"../../src/data/nedb/environment": envMock,
-			"../../src/dockerhub": dockerMock
-		} );
-		service.finish = function() {
-			done();
-			service.finish = finishUp;
-			return Promise.resolve();
-		};
-		integration.upgrade( slackMockDoNothing, dockerMock, {data: {image: "arob/cowpoke:arobson_cowpoke_master_0.6.0_1_abcdef"}} );
-	} );
-} );
-
-describe( "Configure", function() {
-	it( "configure the service", function( done ) {
-		var integration = proxyquire( "../../resource/environment/integration.js", {
-			"../../src/rancher": rancherMock,
-			"../../src/data/nedb/environment": envMock
-		} );
-
-		var simRequest = {
-			data: [{
-				op: "add",
-				field: "slackChannels",
-				value: "new-slack-channel-name"
-			},{
-				op: "remove",
-				field: "slackChannels",
-				value: "TEST2"
+		}).then(res => res.should.partiallyEql({
+			upgraded_stacks_by_environment: [{ // eslint-disable-line
+				environment: "Test",
+				upgraded: [{
+					name: stack.name,
+					id: stackId
+				}]
 			}]
-		};
-		var expectedValue = {
-			status: 200,
+		}));
+	});
+
+	it("should not find anything in github", () => {
+		return integration.upgradeStack(slackMockDoNothing, "abc", {
 			data: {
-				name: "test",
-				baseUrl: "http://example.com",
-				_id: "VoKtrtXdqRS3VDAV",
-				image: "helloworld",
-				key: "key",
-				secret: "secret",
-				slackChannels: [
-					"TEST1",
-					"new-slack-channel-name"
-				]
+				catalog: "Nope" + "/" + githubRepo,
+				rancher_catalog_name: "rebelfleet", // eslint-disable-line
+				branch,
+				catalog_version: version // eslint-disable-line
 			}
-		};
+		}).then(res => res.should.partiallyEql({"status": 404, "data": {"message": "Unable to get information from github"}}));
+	});
 
-		function testResult( result ) {
-			result.should.deep.equal( expectedValue );
-			done();
-		}
+	it("should not find the proper arguments", () => {
+		return integration.upgradeStack(slackMockDoNothing, "abc", {data: {}})
+			.then(res => res.should.partiallyEql({status: 401, data: {message: "Invaild arguments"}}));
+	});
 
-		integration.configure( simRequest ).then( testResult );
-	} );
-} );
 
-describe( "List", function() {
-	var integration = proxyquire( "../../resource/environment/integration.js", {
+});
+
+describe("List", () => {
+	var integration = proxyquire("../../resource/environment/integration.js", {
 		"../../src/rancher": rancherMock,
 		"../../src/data/nedb/environment": envMock
 	});
 
-	it( "should list environments", function( done ) {
-		function testResults( results ) {
-			getAllEnvMock().then( function( envs ) {
-				results.data.should.deep.equal( envs );
-				done();
-			} );
-		}
+	it("should list environments", () => {
+		return integration.list().then(results => results.data.should.deep.equal([_.omit(env, ["slackChannels"])]));
+	});
+});
 
-		integration.list().then( testResults );
-	} );
-} );
-
-describe( "Get an Environment", function() {
-	it( "should get a valid environment", function() {
-		var integration = proxyquire( "../../resource/environment/integration.js", {
+describe("Get an Environment", () => {
+	it("should get a valid environment", () => {
+		var integration = proxyquire("../../resource/environment/integration.js", {
 			"../../src/rancher": rancherMock,
 			"../../src/data/nedb/environment": envMock
-		} );
+		});
 
-		function testResults( results ) {
-			return getEnvMock().then( function( env ) {
-				return results.should.deep.equal( env );
-			} );
+		function testResults(results) {
+			return results.should.deep.equal(env);
 		}
-		return integration.getEnv( {data: {environment: "test"}} ).then( testResults );
-	} );
+		return integration.getEnv({
+			data: {
+				environment: "test"
+			}
+		}).then(testResults);
+	});
 
-	it( "should return 404 when trying to get an invalid environment", function() {
-		var integration = proxyquire( "../../resource/environment/integration.js", {
+	it("should return 404 when trying to get an invalid environment", () => {
+		var integration = proxyquire("../../resource/environment/integration.js", {
 			"../../src/rancher": rancherMock,
 			"../../src/data/nedb/environment": {
 				getByName: function() {
-					return Promise.resolve( undefined );
+					return Promise.resolve(undefined);
 				}
 			}
-		} );
+		});
 
-		function testResults( results ) {
-			return results.should.deep.equal( {
+		function testResults(results) {
+			return results.should.deep.equal({
 				status: "404",
 				data: {
 					message: "Environment Not Found"
 				}
-			} );
+			});
 		}
-		return integration.getEnv( {data: {environment: "DNE"}} ).then( testResults );
-	} );
-} );
+		return integration.getEnv({
+			data: {
+				environment: "DNE"
+			}
+		}).then(testResults);
+	});
+});
 
-describe( "Create", function() {
-	it( "should create an environment", function( done ) {
-		var integration = proxyquire( "../../resource/environment/integration.js", {
+describe("Create", () => {
+	it("should create an environment", done => {
+		var integration = proxyquire("../../resource/environment/integration.js", {
 			"../../src/rancher": rancherMock,
 			"../../src/data/nedb/environment": envMock
-		} );
+		});
 
-		function testResults( res ) {
-			res.data.message.should.equal( "Created" );
+		function testResults(res) {
+			res.data.message.should.equal("Created");
 			done();
 		}
 		var envToCreate = {
@@ -388,15 +224,19 @@ describe( "Create", function() {
 				"pd-builds"
 			]
 		};
-		integration.create( {data: envToCreate} ).then( testResults );
-	} );
-	it( "should not create an environment", function( done ) {
-		var integration = proxyquire( "../../resource/environment/integration.js", {
+		integration.create({
+			data: envToCreate
+		}).then(testResults);
+	});
+
+	it("should not create an environment", done => {
+		var integration = proxyquire("../../resource/environment/integration.js", {
 			"../../src/rancher": rancherMock,
 			"../../src/data/nedb/environment": envMock
-		} );
-		expect( integration.create( {data: {}} ).data.message ).to.equal( "Invaild Environment" );
+		});
+		expect(integration.create({
+			data: {}
+		}).data.message).to.equal("Invaild Environment");
 		done();
-	} );
-} );
-
+	});
+});

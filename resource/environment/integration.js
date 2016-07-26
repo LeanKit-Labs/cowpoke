@@ -3,7 +3,6 @@ const Promise = require("bluebird");
 const rancherFn = require( "../../src/rancher" );
 const format = require( "util" ).format;
 const environment = require( "../../src/data/nedb/environment" );
-const util = require( "../../src/util" );
 const rp = require( "request-promise" );
 
 function onFailure( err ) {
@@ -95,6 +94,16 @@ function sendMessage(slack, channels, message) {
 	}, this);
 }
 
+function shouldUpgradeStack ( stack, catalog, branch, version ) {
+	const stackInfo = stack.externalId.split("://")[1].split(":");
+	const stackCatalog = stackInfo[0];
+	const stackBranch = stackInfo[1];
+	const stackVersion = stackInfo[2];
+	return stackCatalog === catalog &&
+		stackBranch === branch &&
+		parseInt(stackVersion) < parseInt(version);
+}
+
 const getTemplate = Promise.coroutine(function* ( token, catalogOwner, catalog, branch, version ) {
 
 	let response =  yield rp( format( "https://api.github.com/repos/%s/%s/contents/templates/%s/%s", catalogOwner, catalog, branch, version ), {
@@ -132,7 +141,7 @@ const getTemplate = Promise.coroutine(function* ( token, catalogOwner, catalog, 
 const upgradeStack = Promise.coroutine(function* ( slack, githubToken, envelope ) {
 
 	//read args
-	const githubInfo =  envelope.data.catalog.split("/");
+	const githubInfo =  envelope.data.catalog ? envelope.data.catalog.split("/") : [];
 	const githubOwner = githubInfo[0];
 	const githubRepo = githubInfo[1];
 	const rancherCatalogName = envelope.data.rancher_catalog_name;
@@ -154,13 +163,14 @@ const upgradeStack = Promise.coroutine(function* ( slack, githubToken, envelope 
 			}
 		};
 	}
-
+	
 	//get the environments
 	const storedEnvironments = yield environment.getAll().catch( () => undefined );
 	if ( storedEnvironments === undefined ) { 
 		return {status: 404, data: {message: "Unable to get information from the database"}}; 
 	}
 
+	
 	//get the rancher data
 	const envRequests = [];
 	for ( let i = 0; i < storedEnvironments.length; i++ ) {
@@ -184,7 +194,7 @@ const upgradeStack = Promise.coroutine(function* ( slack, githubToken, envelope 
 		const channels = yield environment.getChannels();
 		const stacks = yield rancherEnvironments[i].listStacks();
 		for ( let j = 0; j < stacks.length; j++ ) {
-			if (util.shouldUpgradeStack( stacks[j], rancherCatalogName, branch, catalogNum )) {
+			if (shouldUpgradeStack( stacks[j], rancherCatalogName, branch, catalogNum )) {
 				upgradedStacks.push( {
 					name: stacks[j].name,
 					id: stacks[j].id 
