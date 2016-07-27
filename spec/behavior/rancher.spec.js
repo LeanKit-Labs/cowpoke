@@ -26,13 +26,13 @@ const stacksBody = [{
 		"composeConfig": util.format("/v1/projects/%s/environments/%s/composeconfig", envId, stackId),
 	},
 	"actions": {
-		upgrade: util.format("…/v1/projects/%s/environments/%s/?action=upgrade", envId, stackId),
-		update: util.format("…/v1/projects/%s/environments/%s/?action=update", envId, stackId),
-		remove: util.format("…/v1/projects/%s/environments/%s/?action=remove", envId, stackId),
-		addoutputs: util.format("…/v1/projects/%s/environments/%s/?action=addoutputs", envId, stackId),
-		activateservices: util.format("…/v1/projects/%s/environments/%s/?action=activateservices", envId, stackId),
-		deactivateservices: util.format("…/v1/projects/%s/environments/%s/?action=deactivateservices", envId, stackId),
-		exportconfig: util.format("…/v1/projects/%s/environments/%s/?action=exportconfig", envId, stackId),
+		upgrade: util.format("/v1/projects/%s/environments/%s/?action=upgrade", envId, stackId),
+		update: util.format("/v1/projects/%s/environments/%s/?action=update", envId, stackId),
+		remove: util.format("/v1/projects/%s/environments/%s/?action=remove", envId, stackId),
+		addoutputs: util.format("/v1/projects/%s/environments/%s/?action=addoutputs", envId, stackId),
+		activateservices: util.format("/v1/projects/%s/environments/%s/?action=activateservices", envId, stackId),
+		deactivateservices: util.format("/v1/projects/%s/environments/%s/?action=deactivateservices", envId, stackId),
+		exportconfig: util.format("/v1/projects/%s/environments/%s/?action=exportconfig", envId, stackId),
 	},
 	"environment": {
 		"argument_one": "abc"
@@ -53,6 +53,11 @@ const upgradeTemplate = {
 const newStack = Object.assign({}, stacksBody[0]);
 newStack.rancherCompose =  upgradeTemplate["rancher-compose.yml"];
 newStack.dockerCompose =  upgradeTemplate["docker-compose.yml"];
+newStack.state = "upgraded";
+newStack.actions.finishupgrade = "/finishMe";
+
+const upgradedStack = Object.assign({}, newStack);
+upgradedStack.state = "active";
 
 const properUpgradeRequest = {
 	externalId: "catalog://leankit:drone:" + upgradeTemplate.version,
@@ -62,11 +67,12 @@ const properUpgradeRequest = {
 };
 
 const resquestMoch = (options,  callback) => {
-	if (options.url === stacksBody[0].actions.upgrade && _.isEqual(options.body, properUpgradeRequest)) {
-		return {auth: () => callback(null, newStack)}; 
+	if (options.url === "http://myrancher.com/v1/projects/l0l/environments/2a2/?action=upgrade" 
+		&& _.isEqual(options.body, properUpgradeRequest)) {
+		return {auth: () => callback(null,{body: newStack})};
+	} else if (options.url === "http://myrancher.com/finishMe") {
+		return {auth: () => callback(null,{body: upgradedStack})};
 	} else {
-		//console.log("hello");
-		//console.log(options.url === stacksBody[0].actions.upgrade, _.isEqual(options.body, properUpgradeRequest));
 		return {auth: () => callback("err")}; 
 	}
 };
@@ -74,19 +80,23 @@ const resquestMoch = (options,  callback) => {
 const rancherEnv = {
 	links: {
 		projects: "http://myrancher.com/v1/projects"
+	},
+	actions: {
+		projects: "http://myrancher.com/v1/projects"
 	}
 };
 
 resquestMoch.get = (route, callback) => {
-	console.log(route);
 	if (route === "http://myrancher.com/v1") {
-		return {auth: () => callback(null, {body: JSON.stringify(environmentsBody[0].links.stacks)})};
-	} else if (route === baseURL+"/v1/projects") {
-		return {auth: () => callback(null,{body: JSON.stringify(stacksBody)})};
-	} else if (route === {body: JSON.stringify(environmentsBody[0].links.stacks)}) {
-		return {auth: () => callback(null,stacksBody)};
+		return {auth: () => callback(null, {body: JSON.stringify(rancherEnv)})};
+	} else if (route === "http://myrancher.com/v1/projects") {
+		return {auth: () => callback(null,{body: JSON.stringify({data: environmentsBody})})};
+	} else if (route === "http://myrancher.com/v1/projects/l0l/environments") {
+		return {auth: () => callback(null,{body: JSON.stringify({data: stacksBody})})};
+	} else if (route === "http://myrancher.com/v1/projects/l0l/environments/2a2") {
+		return {auth: () => callback(null,{body: JSON.stringify({data: newStack})})};
 	} else {
-		//console.log(route);
+		console.log(route);
 		return {auth: () => callback("err")};
 	}
 };
@@ -103,7 +113,6 @@ describe("Rancher API", () => {
 			key: "test",
 			secret: "sneakrets"
 		}).then(function(lib) {
-			console.log(lib);
 			rancher = lib;
 		});
 	});
@@ -113,20 +122,19 @@ describe("Rancher API", () => {
 
 		before(() => {
 			return rancher.listEnvironments().then((response) => {
-				console.log(response);
 				environments = response;
 			});
 		});
 
 		it("should retrieve environments", () => {
-			return environments.should.partiallyEql(environmentsBody);
+			return environments.Test.should.partiallyEql(_.omit(environmentsBody[0], ["links"]));
 		});
 	});
 
 	let stacks;
 	describe("When retrieving a list of stacks in an environment", () => {
 		before(() => {
-			return environments[0].listStacks().then(res => {
+			return environments.Test.listStacks().then(res => {
 				stacks = res;
 			});
 		});
@@ -141,13 +149,13 @@ describe("Rancher API", () => {
 		
 
 		before(() => {
-			return stacks.upgrade(upgradeTemplate).then(res => {
+			return stacks[0].upgrade(upgradeTemplate).then(res => {
 				upgraded = res;
 			});
 		});
 
 		it("should upgrade the Stack", () => {
-			return upgraded.should.partiallyEql(newStack);
+			return upgraded.should.partiallyEql(upgradedStack);
 		});
 	});
 

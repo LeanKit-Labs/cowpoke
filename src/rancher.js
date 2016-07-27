@@ -57,7 +57,6 @@ function listEnvironments( http, actions ) {
 	}, error => error );
 }
 
-
 const upgradeStack = Promise.coroutine(function*(http, stack, template) {
 	const idParts = stack.externalId.split("//");
 	const versionInfo = idParts[1].split(":");
@@ -67,7 +66,6 @@ const upgradeStack = Promise.coroutine(function*(http, stack, template) {
 		rancherCompose: template["rancher-compose.yml"],
 		environment: stack.environment
 	});
-
 	while (newStack.state !== "upgraded") {
 		yield Promise.delay(500);
 		newStack = yield http.get( stack.links.self, {} );
@@ -76,7 +74,6 @@ const upgradeStack = Promise.coroutine(function*(http, stack, template) {
 
 	return newStack;
 });
-
 
 function listStacks( http, stackUrl) {
 	return http.get( stackUrl ).then( result => {
@@ -102,4 +99,5 @@ function init( url, credentials ) {
 			};
 		} );
 }
+
 module.exports = init;

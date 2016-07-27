@@ -1,19 +1,21 @@
-
 const integration = require( "./integration" );
+const key = require( "configya" )( {
+	file: "./config.json"
+} ).api.key;
 
-function checkAuth( key, envelope, next ) {
+function checkAuth(envelope, next ) {
 	const userKey = envelope.headers.bearer;
 	if ( !key || userKey === key ) {
 		return next();
 	} else {
-		return {status: 402, data: {message: "giit"}};
+		return {status: 402, data: {message: "unauthorized"}};
 	}
 }
 
-module.exports = function( host, environment, key, slack, githubToken ) {
+module.exports = function( host, environment, slack ) {
 	return {
 		name: "environment",
-		middleware: [checkAuth.bind(null, key)],
+		middleware: [checkAuth],
 		actions: {
 			list: {
 				url: "/",
@@ -38,7 +40,7 @@ module.exports = function( host, environment, key, slack, githubToken ) {
 			uptrade: {
 				url: "/catalog",
 				method: "PUT",
-				handle: integration.upgradeStack.bind( null, slack, githubToken )
+				handle: integration.upgradeStack.bind( null, slack )
 			}
 		}
 	};

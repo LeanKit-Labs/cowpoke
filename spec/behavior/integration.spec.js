@@ -113,11 +113,12 @@ describe("upgradeStack", () => {
 	});
 
 	it("should upgrade the stack", () => {
-		return integration.upgradeStack(slackMockDoNothing, "abc", {
+		return integration.upgradeStack(slackMockDoNothing, {
 			data: {
 				catalog: githubOwner + "/" + githubRepo,
 				rancher_catalog_name: "rebelfleet", // eslint-disable-line
 				branch,
+				github_token: "abc", // eslint-disable-line
 				catalog_version: version // eslint-disable-line
 			}
 		}).then(res => res.should.partiallyEql({
@@ -132,18 +133,19 @@ describe("upgradeStack", () => {
 	});
 
 	it("should not find anything in github", () => {
-		return integration.upgradeStack(slackMockDoNothing, "abc", {
+		return integration.upgradeStack(slackMockDoNothing, {
 			data: {
 				catalog: "Nope" + "/" + githubRepo,
 				rancher_catalog_name: "rebelfleet", // eslint-disable-line
 				branch,
+				github_token: "abc", // eslint-disable-line
 				catalog_version: version // eslint-disable-line
 			}
 		}).then(res => res.should.partiallyEql({"status": 404, "data": {"message": "Unable to get information from github"}}));
 	});
 
 	it("should not find the proper arguments", () => {
-		return integration.upgradeStack(slackMockDoNothing, "abc", {data: {}})
+		return integration.upgradeStack(slackMockDoNothing, {data: {}})
 			.then(res => res.should.partiallyEql({status: 401, data: {message: "Invaild arguments"}}));
 	});
 

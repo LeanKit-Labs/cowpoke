@@ -6,17 +6,9 @@
 		"path": "./data"
 	},
 	"slack": {
-		
+		"token": null
 	},
 	"api": {
-
-	},
-	"github": {
-		"owner": "",
-		"token": ""
-	},
-	"docker": {
-		"user": null,
-		"pass": null
+		"key": null
 	}
 }
