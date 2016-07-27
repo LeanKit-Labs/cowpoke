@@ -122,13 +122,13 @@ __Response__
 
 ### Upgrade
 
-#### `POST /api/environment/catalog`
+#### `PUT /api/environment/`
 
 __Request__
 ```json
 {
 	"catalog": "my-github-org/my-github-catalog-repo",
-	"rancher_catalog_name": "name of the catalog in rancher"
+	"rancher_catalog_name": "name of the catalog in rancher",
 	"branch": "the name of the branch to be deployed",
 	"catalog_version" : "the catalog version number to use",
 	"github_token" : "the access token to use when getting the catalog info"

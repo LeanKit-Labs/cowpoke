@@ -95,13 +95,17 @@ function sendMessage(slack, channels, message) {
 }
 
 function shouldUpgradeStack ( stack, catalog, branch, version ) {
-	const stackInfo = stack.externalId.split("://")[1].split(":");
-	const stackCatalog = stackInfo[0];
-	const stackBranch = stackInfo[1];
-	const stackVersion = stackInfo[2];
-	return stackCatalog === catalog &&
-		stackBranch === branch &&
-		parseInt(stackVersion) < parseInt(version);
+	if (stack.externalId) {
+		const stackInfo = stack.externalId.split("://")[1].split(":");
+		const stackCatalog = stackInfo[0];
+		const stackBranch = stackInfo[1];
+		const stackVersion = stackInfo[2];
+		return stackCatalog === catalog &&
+			stackBranch === branch &&
+			parseInt(stackVersion) < parseInt(version);
+	} else {
+		return false;
+	}
 }
 
 const getTemplate = Promise.coroutine(function* ( token, catalogOwner, catalog, branch, version ) {

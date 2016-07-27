@@ -38,7 +38,7 @@ module.exports = function( host, environment, slack ) {
 				handle: integration.configure
 			},
 			uptrade: {
-				url: "/catalog",
+				url: "/",
 				method: "PUT",
 				handle: integration.upgradeStack.bind( null, slack )
 			}
