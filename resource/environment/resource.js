@@ -8,7 +8,7 @@ function checkAuth(envelope, next ) {
 	if ( !key || userKey === key ) {
 		return next();
 	} else {
-		return {status: 402, data: {message: "unauthorized"}};
+		return {status: 401, data: {message: "unauthorized"}};
 	}
 }
 
@@ -37,8 +37,8 @@ module.exports = function( host, environment, slack ) {
 				method: "PATCH",
 				handle: integration.configure
 			},
-			uptrade: {
-				url: "/",
+			upgrade: {
+				url: "/stack/upgrade",
 				method: "PUT",
 				handle: integration.upgradeStack.bind( null, slack )
 			}

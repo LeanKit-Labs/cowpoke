@@ -119,11 +119,7 @@ const getTemplate = Promise.coroutine(function* ( token, catalogOwner, catalog, 
 			"User-Agent": "cowpoke"
 		},
 		json: true
-	} ).catch(err => console.error(err));
-
-	if (response === undefined) {
-		return undefined;
-	}
+	} );
 	
 	const templateResult = {version};
 
@@ -135,7 +131,7 @@ const getTemplate = Promise.coroutine(function* ( token, catalogOwner, catalog, 
 			headers: {
 				"User-Agent": "cowpoke"
 			}
-		} ).catch(err => console.error(err));
+		} );
 	}
 
 	return templateResult;
@@ -159,20 +155,15 @@ const upgradeStack = Promise.coroutine(function* ( slack, envelope ) {
 	}
 
 	//get the template
-	const template = yield getTemplate( githubToken, githubOwner, githubRepo, branch, catalogNum);
+	const template = yield getTemplate( githubToken, githubOwner, githubRepo, branch, catalogNum).catch( () => undefined );
 	if ( template === undefined ) { 
-		return {
-			status: 404,
-			data: {
-				message: "Unable to get information from github"
-			}
-		};
+		return {status: 404, data: {message: "Unable to get information from github"}};
 	}
 	
 	//get the environments
 	const storedEnvironments = yield environment.getAll().catch( () => undefined );
 	if ( storedEnvironments === undefined ) { 
-		return {status: 404, data: {message: "Unable to get information from the database"}}; 
+		return {status: 500, data: {message: "Unable to get information from the database"}}; 
 	}
 
 	
@@ -207,10 +198,9 @@ const upgradeStack = Promise.coroutine(function* ( slack, envelope ) {
 				sendMessage(slack, channels, "starting upgrade of stack " + stacks[j].name + " in " + rancherEnvironments[i].name);
 				stacks[j].upgrade(template).then( 
 					() => sendMessage(slack, channels, "finished upgrade of stack " + stacks[j].name + " in " + rancherEnvironments[i].name)
-				).catch( error => {
-					console.error("error incountered while trying to upgrade stack ", stacks[j].name, " in ", rancherEnvironments[i].name, ": ", error);
-					sendMessage(slack, channels, "there was an error during upgrade of stack " + stacks[j].name + " in " + rancherEnvironments[i].name + ".");
-				});
+				).catch( () =>
+					sendMessage(slack, channels, "there was an error during upgrade of stack " + stacks[j].name + " in " + rancherEnvironments[i].name + ".")
+				);
 			}
 		}
 		if (upgradedStacks.length !== 0) {
