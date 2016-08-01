@@ -2,15 +2,9 @@ const integration = require( "./integration" );
 const key = require( "configya" )( {
 	file: "./config.json"
 } ).api.key;
+const checkAuth = require("../checkauth").bind(key);
 
-function checkAuth(envelope, next ) {
-	const userKey = envelope.headers.bearer;
-	if ( !key || userKey === key ) {
-		return next();
-	} else {
-		return {status: 401, data: {message: "unauthorized"}};
-	}
-}
+
 
 module.exports = function( host, environment, slack ) {
 	return {
@@ -38,8 +32,8 @@ module.exports = function( host, environment, slack ) {
 				handle: integration.configure
 			},
 			upgrade: {
-				url: "/stack/upgrade",
-				method: "PUT",
+				url: "/stack",
+				method: "PATCH",
 				handle: integration.upgradeStack.bind( null, slack )
 			}
 		}

@@ -50,130 +50,35 @@ const stack = {
 	upgrade: () => Promise.resolve(stack)
 };
 
-var envMock = {
+const envMock = {
 	add: () => Promise.resolve(env),
 	getAll: () => Promise.resolve([_.omit(env, ["slackChannels"])]),
 	getChannels: () => Promise.resolve(channelsList),
 	getByName: () => Promise.resolve(env)
 };
 
-function rancherMock() {
-	return Promise.resolve({
-		listEnvironments: () => Promise.resolve({
-			Test: {
-				id: envId,
-				name: "Test",
-				state: "active",
-				listStacks: () => Promise.resolve([stack]),
-				listContainers: () => Promise.resolve([]),
-				listServices: () => Promise.resolve([]),
-			}
-		})
-	});
-}
 
-
-var slackMockDoNothing = {
-	send: function() {}
-};
-
-
-describe("upgradeStack", () => {
-
-	const githubOwner = "lukeSkywalker";
-	const githubRepo = "rougeSquadron";
-	const version = "70";
-	const branch = "xwing";
-
-	const repo = [
-		{
-			name: "docker-compose.yml",
-			download_url: "https://api.github.com/docker" // eslint-disable-line
-		}, 
-		{
-			name: "rancher-compose.yml",
-			download_url: "https://api.github.com/rancher" // eslint-disable-line
-		} 
-	];
-
-	const integration = proxyquire("../../resource/environment/integration.js", {
-		"../../src/rancher": rancherMock,
-		"../../src/data/nedb/environment": envMock,
-		"request-promise": url => {
-			if (url === util.format("https://api.github.com/repos/%s/%s/contents/templates/%s/%s", githubOwner, githubRepo, branch, version)) {
-				return Promise.resolve(repo);
-			} else if (url === "https://api.github.com/docker") {
-				return Promise.resolve("docker compose");
-			} else if (url === "https://api.github.com/rancher") {
-				return Promise.resolve("rancher compose");
-			} else {
-				return Promise.reject("");
-			}
-		}
-	});
-
-	it("should upgrade the stack", () => {
-		return integration.upgradeStack(slackMockDoNothing, {
-			data: {
-				catalog: githubOwner + "/" + githubRepo,
-				rancher_catalog_name: "rebelfleet", // eslint-disable-line
-				branch,
-				github_token: "abc", // eslint-disable-line
-				catalog_version: version // eslint-disable-line
-			}
-		}).then(res => res.should.partiallyEql({
-			upgraded_stacks_by_environment: [{ // eslint-disable-line
-				environment: "Test",
-				upgraded: [{
-					name: stack.name,
-					id: stackId
-				}]
-			}]
-		}));
-	});
-
-	it("should not find anything in github", () => {
-		return integration.upgradeStack(slackMockDoNothing, {
-			data: {
-				catalog: "Nope" + "/" + githubRepo,
-				rancher_catalog_name: "rebelfleet", // eslint-disable-line
-				branch,
-				github_token: "abc", // eslint-disable-line
-				catalog_version: version // eslint-disable-line
-			}
-		}).then(res => res.should.partiallyEql({"status": 404, "data": {"message": "Unable to get template yaml files from github. Check repository and token"}}));
-	});
-
-	it("should not find the proper arguments", () => {
-		return integration.upgradeStack(slackMockDoNothing, {data: {}})
-			.then(res => res.should.partiallyEql({status: 401, data: {message: "Invaild arguments"}}));
-	});
-
-
-});
 
 describe("List", () => {
-	var integration = proxyquire("../../resource/environment/integration.js", {
-		"../../src/rancher": rancherMock,
+	const enviorment = proxyquire("../../resource/environment/enviorment.js", {
 		"../../src/data/nedb/environment": envMock
 	});
 
 	it("should list environments", () => {
-		return integration.list().then(results => results.data.should.deep.equal([_.omit(env, ["slackChannels"])]));
+		return enviorment.list().then(results => results.data.should.deep.equal([_.omit(env, ["slackChannels"])]));
 	});
 });
 
 describe("Get an Environment", () => {
 	it("should get a valid environment", () => {
-		var integration = proxyquire("../../resource/environment/integration.js", {
-			"../../src/rancher": rancherMock,
+		const enviorment = proxyquire("../../resource/environment/enviorment.js", {
 			"../../src/data/nedb/environment": envMock
 		});
 
 		function testResults(results) {
 			return results.should.deep.equal(env);
 		}
-		return integration.getEnv({
+		return enviorment.getEnv({
 			data: {
 				environment: "test"
 			}
@@ -181,8 +86,7 @@ describe("Get an Environment", () => {
 	});
 
 	it("should return 404 when trying to get an invalid environment", () => {
-		var integration = proxyquire("../../resource/environment/integration.js", {
-			"../../src/rancher": rancherMock,
+		const enviorment = proxyquire("../../resource/environment/enviorment.js", {
 			"../../src/data/nedb/environment": {
 				getByName: function() {
 					return Promise.resolve(undefined);
@@ -198,7 +102,7 @@ describe("Get an Environment", () => {
 				}
 			});
 		}
-		return integration.getEnv({
+		return enviorment.getEnv({
 			data: {
 				environment: "DNE"
 			}
@@ -208,8 +112,7 @@ describe("Get an Environment", () => {
 
 describe("Create", () => {
 	it("should create an environment", done => {
-		var integration = proxyquire("../../resource/environment/integration.js", {
-			"../../src/rancher": rancherMock,
+		const enviorment = proxyquire("../../resource/environment/enviorment.js", {
 			"../../src/data/nedb/environment": envMock
 		});
 
@@ -217,7 +120,7 @@ describe("Create", () => {
 			res.data.message.should.equal("Created");
 			done();
 		}
-		var envToCreate = {
+		const envToCreate = {
 			name: "d1-d02",
 			baseUrl: "https://rancher.leankit.io",
 			key: "key",
@@ -226,17 +129,16 @@ describe("Create", () => {
 				"pd-builds"
 			]
 		};
-		integration.create({
+		enviorment.create({
 			data: envToCreate
 		}).then(testResults);
 	});
 
 	it("should not create an environment", done => {
-		var integration = proxyquire("../../resource/environment/integration.js", {
-			"../../src/rancher": rancherMock,
+		const enviorment = proxyquire("../../resource/environment/enviorment.js", {
 			"../../src/data/nedb/environment": envMock
 		});
-		expect(integration.create({
+		expect(enviorment.create({
 			data: {}
 		}).data.message).to.equal("Invaild Environment");
 		done();

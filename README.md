@@ -122,7 +122,7 @@ __Response__
 
 ### Upgrade
 
-#### `PUT /api/environment/`
+#### `PATCH /api/stack/`
 
 __Request__
 ```json
