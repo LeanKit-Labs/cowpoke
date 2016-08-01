@@ -1,4 +1,4 @@
-const environment = require( "./environment" );
+const environmentResouce = require( "./environment" );
 const key = require( "configya" )( {
 	file: "./config.json"
 } ).api.key;
@@ -6,7 +6,7 @@ const checkAuth = require("../checkauth").bind(key);
 
 
 
-module.exports = function() {
+module.exports = function(host, environment, slack) { // eslint-disable-line
 	return {
 		name: "environment",
 		middleware: [checkAuth],
@@ -14,22 +14,22 @@ module.exports = function() {
 			list: {
 				url: "/",
 				method: "GET",
-				handle: environment.list
+				handle: environmentResouce.list
 			},
 			getEnv: {
 				url: "/:environment",
 				method: "GET",
-				handle: environment.getEnv
+				handle: environmentResouce.getEnv
 			},
 			create: {
 				url: "/",
 				method: "POST",
-				handle: environment.create
+				handle: environmentResouce.create
 			},
 			configure: {
 				url: "/:environment",
 				method: "PATCH",
-				handle: environment.configure
+				handle: environmentResouce.configure
 			}
 		}
 	};

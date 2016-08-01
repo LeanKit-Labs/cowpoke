@@ -6,11 +6,11 @@ const checkAuth = require("../checkauth").bind(key);
 
 module.exports = function( host, environment, slack ) {
 	return {
-		name: "environment",
+		name: "stack",
 		middleware: [checkAuth],
 		actions: {
 			upgrade: {
-				url: "/stack",
+				url: "/",
 				method: "PATCH",
 				handle: stack.upgradeStack.bind( null, slack )
 			}
