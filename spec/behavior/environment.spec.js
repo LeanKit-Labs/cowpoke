@@ -60,25 +60,25 @@ const envMock = {
 
 
 describe("List", () => {
-	const enviorment = proxyquire("../../resource/environment/enviorment.js", {
+	const environment = proxyquire("../../resource/environment/environment.js", {
 		"../../src/data/nedb/environment": envMock
 	});
 
 	it("should list environments", () => {
-		return enviorment.list().then(results => results.data.should.deep.equal([_.omit(env, ["slackChannels"])]));
+		return environment.list().then(results => results.data.should.deep.equal([_.omit(env, ["slackChannels"])]));
 	});
 });
 
 describe("Get an Environment", () => {
 	it("should get a valid environment", () => {
-		const enviorment = proxyquire("../../resource/environment/enviorment.js", {
+		const environment = proxyquire("../../resource/environment/environment.js", {
 			"../../src/data/nedb/environment": envMock
 		});
 
 		function testResults(results) {
 			return results.should.deep.equal(env);
 		}
-		return enviorment.getEnv({
+		return environment.getEnv({
 			data: {
 				environment: "test"
 			}
@@ -86,7 +86,7 @@ describe("Get an Environment", () => {
 	});
 
 	it("should return 404 when trying to get an invalid environment", () => {
-		const enviorment = proxyquire("../../resource/environment/enviorment.js", {
+		const environment = proxyquire("../../resource/environment/environment.js", {
 			"../../src/data/nedb/environment": {
 				getByName: function() {
 					return Promise.resolve(undefined);
@@ -102,7 +102,7 @@ describe("Get an Environment", () => {
 				}
 			});
 		}
-		return enviorment.getEnv({
+		return environment.getEnv({
 			data: {
 				environment: "DNE"
 			}
@@ -112,7 +112,7 @@ describe("Get an Environment", () => {
 
 describe("Create", () => {
 	it("should create an environment", done => {
-		const enviorment = proxyquire("../../resource/environment/enviorment.js", {
+		const environment = proxyquire("../../resource/environment/environment.js", {
 			"../../src/data/nedb/environment": envMock
 		});
 
@@ -129,16 +129,16 @@ describe("Create", () => {
 				"pd-builds"
 			]
 		};
-		enviorment.create({
+		environment.create({
 			data: envToCreate
 		}).then(testResults);
 	});
 
 	it("should not create an environment", done => {
-		const enviorment = proxyquire("../../resource/environment/enviorment.js", {
+		const environment = proxyquire("../../resource/environment/environment.js", {
 			"../../src/data/nedb/environment": envMock
 		});
-		expect(enviorment.create({
+		expect(environment.create({
 			data: {}
 		}).data.message).to.equal("Invaild Environment");
 		done();
