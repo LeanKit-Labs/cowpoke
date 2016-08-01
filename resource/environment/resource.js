@@ -1,4 +1,4 @@
-const integration = require( "./integration" );
+const environment = require( "./environment" );
 const key = require( "configya" )( {
 	file: "./config.json"
 } ).api.key;
@@ -6,7 +6,7 @@ const checkAuth = require("../checkauth").bind(key);
 
 
 
-module.exports = function( host, environment, slack ) {
+module.exports = function() {
 	return {
 		name: "environment",
 		middleware: [checkAuth],
@@ -14,27 +14,22 @@ module.exports = function( host, environment, slack ) {
 			list: {
 				url: "/",
 				method: "GET",
-				handle: integration.list
+				handle: environment.list
 			},
 			getEnv: {
 				url: "/:environment",
 				method: "GET",
-				handle: integration.getEnv
+				handle: environment.getEnv
 			},
 			create: {
 				url: "/",
 				method: "POST",
-				handle: integration.create
+				handle: environment.create
 			},
 			configure: {
 				url: "/:environment",
 				method: "PATCH",
-				handle: integration.configure
-			},
-			upgrade: {
-				url: "/stack",
-				method: "PATCH",
-				handle: integration.upgradeStack.bind( null, slack )
+				handle: environment.configure
 			}
 		}
 	};
