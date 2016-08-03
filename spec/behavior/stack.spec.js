@@ -141,12 +141,16 @@ describe("upgradeStack", () => {
 				github_token: "abc", // eslint-disable-line
 				catalog_version: version // eslint-disable-line
 			}
-		}).then(res => res.should.partiallyEql({"status": 404, "data": {"message": "Unable to get template yaml files from github. Check repository and token"}}));
+		}).then(res => 
+			res.should.partiallyEql({"status": 404, "data": {"message": "Unable to get template yaml files from github. Check repository and token"}})
+		);
 	});
 
 	it("should not find the proper arguments", () => {
 		return stackResource.upgradeStack(slackMockDoNothing, {data: {}})
-			.then(res => res.should.partiallyEql({status: 401, data: {message: "Invaild arguments"}}));
+			.then(res => 
+				res.should.partiallyEql({status: 401, data: {message: "Invaild arguments"}})
+			);
 	});
 
 
