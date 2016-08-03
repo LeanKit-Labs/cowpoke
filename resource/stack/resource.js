@@ -2,7 +2,7 @@ const stack = require( "./stack" );
 const key = require( "configya" )( {
 	file: "./config.json"
 } ).api.key;
-const checkAuth = require("../checkauth").bind(key);
+const checkAuth = require("../checkauth").bind(null, key);
 
 module.exports = function( host, environment, slack ) {
 	return {

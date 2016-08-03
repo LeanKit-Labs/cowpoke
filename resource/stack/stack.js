@@ -61,7 +61,7 @@ const upgradeStack = Promise.coroutine(function* ( slack, envelope ) {
 	const githubInfo = envelope.data.catalog ? envelope.data.catalog.split("/") : [];
 	const githubOwner = githubInfo[0];
 	const githubRepo = githubInfo[1];
-	const rancherCatalogName = envelope.data.rancher_catalog_name;
+	const rancherCatalogName = envelope.data.githubToken;
 	const branch = envelope.data.branch;
 	const catalogNum = envelope.data.catalog_version;
 	const githubToken = envelope.data.github_token;
@@ -90,14 +90,20 @@ const upgradeStack = Promise.coroutine(function* ( slack, envelope ) {
 		envRequests.push( rancherFn( storedEnvironments[i].baseUrl, {
 			key: storedEnvironments[i].key,
 			secret: storedEnvironments[i].secret
-		} )
-		.then( rancher => rancher.listEnvironments())
-		.then(environments => environments[_.keys( environments )[0]])
-		.catch(() => []));
+		} ).catch(() => console.error("Authorization failed for ", storedEnvironments[i].name)).then(Promise.coroutine(function*(rancher) {
+			if (rancher === undefined) {
+				throw new Error("Authorization failed for " + storedEnvironments[i].name);
+			}
+			const environments = yield rancher.listEnvironments();
+			return environments[_.keys( environments )[0]];
+		})));
 	}
 
 	//loop through the stacks and upgrade those that match
-	const rancherEnvironments = yield Promise.all( envRequests );
+	const rancherEnvironments = yield Promise.all( envRequests ).catch(err => ({status: 500, message: err.message}));
+	if (rancherEnvironments.constructor !== Array) {
+		return rancherEnvironments;
+	}
 	const upgraded = [];
 	for (let i = 0; i < rancherEnvironments.length; i++) {
 		const upgradedStacks = [];
@@ -124,12 +130,12 @@ const upgradeStack = Promise.coroutine(function* ( slack, envelope ) {
 			});
 		}
 	}
-	if (upgraded) {
+	if (upgraded.length !== 0) {
 		return {
 			upgraded_stacks_by_environment: upgraded // eslint-disable-line
 		};
 	} else {
-		return "Nothing eligible for upgrading";
+		return {message: "Nothing eligible for upgrading"};
 	}
 });
 

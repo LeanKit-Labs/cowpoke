@@ -2,7 +2,7 @@ const environmentResouce = require( "./environment" );
 const key = require( "configya" )( {
 	file: "./config.json"
 } ).api.key;
-const checkAuth = require("../checkauth").bind(key);
+const checkAuth = require("../checkauth").bind(null, key);
 
 
 

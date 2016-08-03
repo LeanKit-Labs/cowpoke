@@ -93,6 +93,9 @@ function init( url, credentials ) {
 	};
 	return http.get( "v1" )
 		.then(  metadata => {
+			if (metadata.code === "Unauthorized") {
+				throw new Error("Rancher environment authorization failed");
+			}
 			actions = metadata.links;
 			return {
 				listEnvironments: listEnvironments.bind( null, http, actions )
