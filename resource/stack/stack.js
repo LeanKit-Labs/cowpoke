@@ -61,10 +61,10 @@ const upgradeStack = Promise.coroutine(function* ( slack, envelope ) {
 	const githubInfo = envelope.data.catalog ? envelope.data.catalog.split("/") : [];
 	const githubOwner = githubInfo[0];
 	const githubRepo = githubInfo[1];
-	const rancherCatalogName = envelope.data.rancher_catalog_name;
+	const rancherCatalogName = envelope.data.rancherCatalogName;
 	const branch = envelope.data.branch;
-	const catalogNum = envelope.data.catalog_version;
-	const githubToken = envelope.data.github_token;
+	const catalogNum = envelope.data.catalogVersion;
+	const githubToken = envelope.data.githubToken;
 	//check args
 	if (!githubToken || !githubInfo || !githubOwner || !githubRepo || !branch || !catalogNum || !rancherCatalogName || isNaN(catalogNum)) {
 		return {status: 401, data: {message: "Invaild arguments"}};
