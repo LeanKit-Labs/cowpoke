@@ -17,9 +17,9 @@ function fetch( api, pattern, map, continuation ) {
 	map = map || (x => x);
 	const op = api.raw.find( pattern ).sort( continuation.sort );
 	const promise = Promise.promisify( op.exec.bind( op ) )().then(list => {
-		return _.map( list, map )
+		return _.map( list, map );
 	});
-	return promise//Promise.try( promise );
+	return promise;//Promise.try( promise );
 }
 
 function fetchPage( api, pattern, map, continuation ) {
