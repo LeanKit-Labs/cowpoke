@@ -6,6 +6,7 @@ A service to handle configurable rancher stack upgrade patterns. Each service yo
 
 
 >While not required to run cowpoke, a slack integration is highly recommended as the request response only informs you what upgrades were started, and any information after that comes afterwards and only be provided by slack: notably what upgrades were actually finished. We hope some time to add support to other messaging clients, and if you have one you would like to add support for, we would be thrilled to see a PR come in for this. Thank you!
+
 ## Configuration
 
 ### JSON
