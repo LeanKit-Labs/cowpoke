@@ -116,10 +116,10 @@ describe("upgradeStack", () => {
 		return stackResource.upgradeStack(slackMockDoNothing, {
 			data: {
 				catalog: githubOwner + "/" + githubRepo,
-				rancher_catalog_name: "rebelfleet", // eslint-disable-line
+				rancherCatalogName: "rebelfleet", // eslint-disable-line
 				branch,
-				github_token: "abc", // eslint-disable-line
-				catalog_version: version // eslint-disable-line
+				githubToken: "abc", // eslint-disable-line
+				catalogVersion: version // eslint-disable-line
 			}
 		}).then(res => res.should.partiallyEql({
 			upgraded_stacks_by_environment: [{ // eslint-disable-line
@@ -136,10 +136,10 @@ describe("upgradeStack", () => {
 		return stackResource.upgradeStack(slackMockDoNothing, {
 			data: {
 				catalog: "Nope" + "/" + githubRepo,
-				rancher_catalog_name: "rebelfleet", // eslint-disable-line
+				rancherCatalogName: "rebelfleet", // eslint-disable-line
 				branch,
-				github_token: "abc", // eslint-disable-line
-				catalog_version: version // eslint-disable-line
+				githubToken: "abc", // eslint-disable-line
+				catalogVersion: version // eslint-disable-line
 			}
 		}).then(res => 
 			res.should.partiallyEql({"status": 404, "data": {"message": "Unable to get template yaml files from github. Check repository and token"}})
