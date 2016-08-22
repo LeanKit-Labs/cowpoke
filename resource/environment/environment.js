@@ -1,6 +1,6 @@
 const _ = require( "lodash" );
 const Promise = require("bluebird");
-const environment = require( "../../src/data/nedb/environment" );
+const environment = require( "../../src/data/environment" );
 
 function onFailure( err ) {
 	return {
@@ -53,7 +53,7 @@ const configure = Promise.coroutine( function* ( envelope )  {
 			}
 		} );
 		env.slackChannels = _.unique( env.slackChannels );
-		return environment.add( env ).then( () => ({
+		return environment.update( env ).then( () => ({
 			status: 200,
 			data: env
 		}), () => ( {

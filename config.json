@@ -2,7 +2,7 @@
 	"host": {
 		"port": 8800
 	},
-	"nedb": {
+	"pouchdb": {
 		"path": "./data"
 	},
 	"slack": {

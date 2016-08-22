@@ -2,7 +2,7 @@ const _ = require( "lodash" );
 const Promise = require("bluebird");
 const rancherFn = require( "../../src/rancher" );
 const format = require( "util" ).format;
-const environment = require( "../../src/data/nedb/environment" );
+const environment = require( "../../src/data/environment" );
 const rp = require( "request-promise" );
 
 function sendMessage(slack, channels, message) {
