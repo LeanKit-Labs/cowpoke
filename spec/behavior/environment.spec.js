@@ -61,7 +61,7 @@ const envMock = {
 
 describe("List", () => {
 	const environment = proxyquire("../../resource/environment/environment.js", {
-		"../../src/data/nedb/environment": envMock
+		"../../src/data/environment": envMock
 	});
 
 	it("should list environments", () => {
@@ -72,7 +72,7 @@ describe("List", () => {
 describe("Get an Environment", () => {
 	it("should get a valid environment", () => {
 		const environment = proxyquire("../../resource/environment/environment.js", {
-			"../../src/data/nedb/environment": envMock
+			"../../src/data/environment": envMock
 		});
 
 		function testResults(results) {
@@ -87,7 +87,7 @@ describe("Get an Environment", () => {
 
 	it("should return 404 when trying to get an invalid environment", () => {
 		const environment = proxyquire("../../resource/environment/environment.js", {
-			"../../src/data/nedb/environment": {
+			"../../src/data/environment": {
 				getByName: function() {
 					return Promise.resolve(undefined);
 				}
@@ -113,7 +113,7 @@ describe("Get an Environment", () => {
 describe("Create", () => {
 	it("should create an environment", done => {
 		const environment = proxyquire("../../resource/environment/environment.js", {
-			"../../src/data/nedb/environment": envMock
+			"../../src/data/environment": envMock
 		});
 
 		function testResults(res) {
@@ -136,7 +136,7 @@ describe("Create", () => {
 
 	it("should not create an environment", done => {
 		const environment = proxyquire("../../resource/environment/environment.js", {
-			"../../src/data/nedb/environment": envMock
+			"../../src/data/environment": envMock
 		});
 		expect(environment.create({
 			data: {}
