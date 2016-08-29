@@ -98,7 +98,7 @@ describe("upgradeStack", () => {
 
 	const stackResource = proxyquire("../../resource/stack/stack.js", {
 		"../../src/rancher": rancherMock,
-		"../../src/data/nedb/environment": envMock,
+		"../../src/data/environment": envMock,
 		"request-promise": url => {
 			if (url === util.format("https://api.github.com/repos/%s/%s/contents/templates/%s/%s", githubOwner, githubRepo, branch, version)) {
 				return Promise.resolve(repo);
