@@ -7,6 +7,7 @@ ADD . /app
 ENV NODE_ENV=production
 
 WORKDIR /app
+RUN npm install
 # If you have native dependencies, you'll need extra tools
 
 VOLUME [ "/app/data" ]
