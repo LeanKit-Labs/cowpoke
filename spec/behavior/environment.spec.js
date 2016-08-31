@@ -61,7 +61,7 @@ const envMock = {
 
 describe("List", () => {
 	const environment = proxyquire("../../resource/environment/environment.js", {
-		"../../src/data/nedb/environment": envMock
+		"../../src/data/environment": envMock
 	});
 
 	it("should list environments", () => {
@@ -72,7 +72,7 @@ describe("List", () => {
 describe("Get an Environment", () => {
 	it("should get a valid environment", () => {
 		const environment = proxyquire("../../resource/environment/environment.js", {
-			"../../src/data/nedb/environment": envMock
+			"../../src/data/environment": envMock
 		});
 
 		function testResults(results) {
@@ -87,7 +87,7 @@ describe("Get an Environment", () => {
 
 	it("should return 404 when trying to get an invalid environment", () => {
 		const environment = proxyquire("../../resource/environment/environment.js", {
-			"../../src/data/nedb/environment": {
+			"../../src/data/environment": {
 				getByName: function() {
 					return Promise.resolve(undefined);
 				}
@@ -111,15 +111,16 @@ describe("Get an Environment", () => {
 });
 
 describe("Create", () => {
-	it("should create an environment", done => {
+	it("should create an environment", () => {
 		const environment = proxyquire("../../resource/environment/environment.js", {
-			"../../src/data/nedb/environment": envMock
+			"../../src/data/environment": {
+				add: () => Promise.resolve(env),
+				getAll: () => Promise.resolve([_.omit(env, ["slackChannels"])]),
+				getChannels: () => Promise.resolve(channelsList),
+				getByName: () => Promise.resolve(undefined)
+			}
 		});
 
-		function testResults(res) {
-			res.data.message.should.equal("Created");
-			done();
-		}
 		const envToCreate = {
 			name: "d1-d02",
 			baseUrl: "https://rancher.leankit.io",
@@ -129,18 +130,37 @@ describe("Create", () => {
 				"pd-builds"
 			]
 		};
-		environment.create({
+		return environment.create({
 			data: envToCreate
-		}).then(testResults);
+		}).then(function(res) {
+			return res.data.message.should.equal("Created");
+		});
 	});
 
-	it("should not create an environment", done => {
+	it("should not create an environment", () => {
 		const environment = proxyquire("../../resource/environment/environment.js", {
-			"../../src/data/nedb/environment": envMock
+			"../../src/data/environment": envMock
 		});
-		expect(environment.create({
+		return environment.create({
 			data: {}
-		}).data.message).to.equal("Invaild Environment");
-		done();
+		}).then(res => res.data.message.should.equal("Invaild Environment"));
+	});
+
+	it("should not create an environment becuase one already exists", () => {
+		const environment = proxyquire("../../resource/environment/environment.js", {
+			"../../src/data/environment": envMock
+		});
+		const envToCreate = {
+			name: "d1-d02",
+			baseUrl: "https://rancher.leankit.io",
+			key: "key",
+			secret: "secret",
+			slackChannels: [
+				"pd-builds"
+			]
+		};
+		return environment.create({
+			data: envToCreate
+		}).then(res => res.data.message.should.equal("Environment exists"));
 	});
 });

@@ -9,7 +9,7 @@ if ( !config.api.key ) {
 	console.warn( "API_KEY not set. No authentication will be used" );
 }
 
-const environments = require( "./data/nedb/environment" );
+const environments = require( "./data/environment" );
 fount.register( "environment", environments );
 
 const slack = require( "./slack" )( config.slack.token, environments );

@@ -1,8 +1,8 @@
-const _ = require( "lodash" );
+const _ = require("lodash");
 const Promise = require("bluebird");
-const environment = require( "../../src/data/nedb/environment" );
+const environment = require("../../src/data/environment");
 
-function onFailure( err ) {
+function onFailure(err) {
 	return {
 		data: {
 			message: err.message
@@ -12,57 +12,76 @@ function onFailure( err ) {
 }
 
 function list() {
-	return environment.getAll().then( data => ( {data} ), onFailure );
+	return environment.getAll().then(data => ({
+		data
+	}), onFailure);
 }
 
-function create( envelope ) {
+const create = Promise.coroutine(function*(envelope) {
+	
 	var data = envelope.data;
-	if ( data.name && data.baseUrl && data.key && data.secret && data.slackChannels ) {
-		return environment.add( data ).then( () => (
-			{
+	if (data.name && data.baseUrl && data.key && data.secret && data.slackChannels) {
+		const exists = yield environment.getByName(data.name).catch(() => undefined);
+		
+		if (!exists) {
+			return environment.add(data).then(() => ({
 				data: {
 					message: "Created"
 				}
-			}
-		), onFailure );
+			}), onFailure);
+		} else {
+			return {
+				status: 400,
+				data: {
+					message: "Environment exists"
+				}
+			};
+		}
 	} else {
 		return {
+			status: 400,
 			data: {
 				message: "Invaild Environment"
 			}
 		};
 	}
-}
+});
 
-const configure = Promise.coroutine( function* ( envelope )  {
+const configure = Promise.coroutine(function*(envelope) {
 	const data = envelope.data;
 	const name = data.environment;
 
 	//get the environment
-	const env = yield environment.getByName( name );
+	const env = yield environment.getByName(name).catch(() => undefined);
+	if (!env) {
+		return {
+			status: 404,
+			message: "Environment not found"
+		};
+	}
 	//try to change it
 	try {
 		env.slackChannels = env.slackChannels || [];
-		_.each( data,  item => {
-			if ( ( item.field === "slackChannels" || item.path === "/slackChannels" ) ) {
-				if ( item.op === "add" ) {
-					env.slackChannels.push( item.value );
-				} else if ( item.op === "remove" ) {
-					env.slackChannels = _.without( env.slackChannels, item.value );
+		_.each(data, item => {
+			if ((item.field === "slackChannels" || item.path === "/slackChannels")) {
+				if (item.op === "add") {
+					env.slackChannels.push(item.value);
+				} else if (item.op === "remove") {
+					env.slackChannels = _.without(env.slackChannels, item.value);
 				}
 			}
-		} );
-		env.slackChannels = _.unique( env.slackChannels );
-		return environment.add( env ).then( () => ({
+		});
+		env.slackChannels = _.unique(env.slackChannels);
+		return environment.update(env).then(() => ({
 			status: 200,
 			data: env
-		}), () => ( {
+		}), () => ({
 			status: 500,
 			data: {
 				message: "Failed to add environment to the database"
 			}
-		} ) );
-	} catch ( e ) {
+		}));
+	} catch (e) {
 		return {
 			status: 400,
 			data: {
@@ -70,19 +89,19 @@ const configure = Promise.coroutine( function* ( envelope )  {
 			}
 		};
 	}
-	
-} );
 
-function getEnv( envelope ) {
+});
+
+function getEnv(envelope) {
 	const name = envelope.data.environment;
-	return environment.getByName( name ).then( env => {
+	return environment.getByName(name).catch(() => undefined).then(env => {
 		return env || {
 			status: "404",
 			data: {
 				message: "Environment Not Found"
 			}
 		};
-	} );
+	});
 }
 
 module.exports = {

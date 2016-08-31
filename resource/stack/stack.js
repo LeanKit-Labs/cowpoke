@@ -2,7 +2,7 @@ const _ = require( "lodash" );
 const Promise = require("bluebird");
 const rancherFn = require( "../../src/rancher" );
 const format = require( "util" ).format;
-const environment = require( "../../src/data/nedb/environment" );
+const environment = require( "../../src/data/environment" );
 const rp = require( "request-promise" );
 
 function sendMessage(slack, channels, message) {
@@ -106,7 +106,7 @@ const upgradeStack = Promise.coroutine(function* ( slack, envelope ) {
 	const upgraded = [];
 	for (let i = 0; i < rancherEnvironments.length; i++) {
 		const upgradedStacks = [];
-		const channels = yield environment.getChannels();
+		const channels = yield environment.getChannels().catch(() => []);
 		const stacks = yield rancherEnvironments[i].listStacks();
 		for ( let j = 0; j < stacks.length; j++ ) {
 			if (shouldUpgradeStack( stacks[j], rancherCatalogName, branch, catalogNum )) {
