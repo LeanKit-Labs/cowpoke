@@ -106,7 +106,7 @@ const upgradeStack = Promise.coroutine(function* ( slack, envelope ) {
 	const upgraded = [];
 	for (let i = 0; i < rancherEnvironments.length; i++) {
 		const upgradedStacks = [];
-		const channels = yield environment.getChannels();
+		const channels = yield environment.getChannels().catch(() => []);
 		const stacks = yield rancherEnvironments[i].listStacks();
 		for ( let j = 0; j < stacks.length; j++ ) {
 			if (shouldUpgradeStack( stacks[j], rancherCatalogName, branch, catalogNum )) {

@@ -25,9 +25,9 @@ function update( db , doc) {
 
 module.exports = function( fileName ) {
 	const dbPath = path.join( config.pouchdb.path, fileName );
-	const db = new PouchDB(dbPath, { db: require('sqldown') });
+	const db = new PouchDB(dbPath, {db: require("sqldown")});
 	return {
-		fetch: function( docName ) {
+		fetch: docName  => {
 			if (docName) {
 				return db.get(docName);
 			} else {
