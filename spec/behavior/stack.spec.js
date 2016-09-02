@@ -2,21 +2,8 @@ require("../setup");
 const proxyquire = require("proxyquire").callThru();
 const Promise = require("bluebird");
 const util = require("util");
-const _ = require("lodash");
 /* global */
 
-
-const env = {
-	name: "test",
-	baseUrl: "http://example.com",
-	_id: "VoKtrtXdqRS3VDAV",
-	image: "helloworld",
-	key: "key",
-	secret: "secret",
-	slackChannels: channelsList
-};
-
-const channelsList = ["TEST1", "TEST2"];
 const envId = "101";
 const stackId = "202";
 const stack = {
@@ -50,17 +37,10 @@ const stack = {
 	upgrade: () => Promise.resolve(stack)
 };
 
-const envMock = {
-	add: () => Promise.resolve(env),
-	getAll: () => Promise.resolve([_.omit(env, ["slackChannels"])]),
-	getChannels: () => Promise.resolve(channelsList),
-	getByName: () => Promise.resolve(env)
-};
-
 function rancherMock() {
 	return Promise.resolve({
-		listEnvironments: () => Promise.resolve({
-			Test: {
+		listEnvironments: () => Promise.resolve([
+			{
 				id: envId,
 				name: "Test",
 				state: "active",
@@ -68,10 +48,9 @@ function rancherMock() {
 				listContainers: () => Promise.resolve([]),
 				listServices: () => Promise.resolve([]),
 			}
-		})
+		])
 	});
 }
-
 
 const slackMockDoNothing = {
 	send: function() {}
@@ -98,7 +77,6 @@ describe("upgradeStack", () => {
 
 	const stackResource = proxyquire("../../resource/stack/stack.js", {
 		"../../src/rancher": rancherMock,
-		"../../src/data/nedb/environment": envMock,
 		"request-promise": url => {
 			if (url === util.format("https://api.github.com/repos/%s/%s/contents/templates/%s/%s", githubOwner, githubRepo, branch, version)) {
 				return Promise.resolve(repo);
@@ -113,7 +91,7 @@ describe("upgradeStack", () => {
 	});
 
 	it("should upgrade the stack", () => {
-		return stackResource.upgradeStack(slackMockDoNothing, {
+		return stackResource.upgradeStack("url", {key: "", secret: ""}, slackMockDoNothing, {
 			data: {
 				catalog: githubOwner + "/" + githubRepo,
 				rancherCatalogName: "rebelfleet", // eslint-disable-line
@@ -133,7 +111,7 @@ describe("upgradeStack", () => {
 	});
 
 	it("should not find anything in github", () => {
-		return stackResource.upgradeStack(slackMockDoNothing, {
+		return stackResource.upgradeStack("url", {key: "", secret: ""}, slackMockDoNothing, {
 			data: {
 				catalog: "Nope" + "/" + githubRepo,
 				rancherCatalogName: "rebelfleet", // eslint-disable-line
@@ -147,7 +125,7 @@ describe("upgradeStack", () => {
 	});
 
 	it("should not find the proper arguments", () => {
-		return stackResource.upgradeStack(slackMockDoNothing, {data: {}})
+		return stackResource.upgradeStack("url", {key: "", secret: ""}, slackMockDoNothing, {data: {}})
 			.then(res => 
 				res.should.partiallyEql({status: 401, data: {message: "Invaild arguments"}})
 			);

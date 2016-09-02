@@ -2,13 +2,19 @@
 	"host": {
 		"port": 8800
 	},
-	"nedb": {
-		"path": "./data"
-	},
+
 	"slack": {
-		"token": null
+		"token": null,
+		"channels": []
 	},
 	"api": {
 		"key": null
+	},
+	"rancher": {
+		"user": {
+			"key": null,
+			"secret": null
+		},
+		"url": null
 	}
 }

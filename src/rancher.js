@@ -40,23 +40,6 @@ function post( url, credentials, path, body ) {
 	} );
 }
 
-function listEnvironments( http, actions ) {
-	return http.get( actions.projects ).then( result => {
-		const data = result.data;
-		return _.reduce( data, ( acc, environment ) => {
-			const obj = {
-				id: environment.id,
-				name: environment.name,
-				state: environment.state,
-				listStacks: listStacks.bind( null, http, environment.links.environments, environment.name ),
-				listContainers: http.get.bind( null, environment.links.containers ),
-			};
-			acc[environment.name] = obj;
-			return acc;
-		}, {} );
-	}, error => error );
-}
-
 const upgradeStack = Promise.coroutine(function*(http, stack, template) {
 	const idParts = stack.externalId.split("//");
 	const versionInfo = idParts[1].split(":");
@@ -85,8 +68,15 @@ function listStacks( http, stackUrl) {
 	}, error => error );
 }
 
+function listEnvironments(http) {
+	return http.get("/v1/projects").then(res => res.data.map(elm => {
+		elm.listStacks = listStacks.bind( null, http, elm.links.environments, elm.name );
+		elm.listContainers = http.get.bind( null, elm.links.containers );
+		return elm;
+	}));
+}
+
 function init( url, credentials ) {
-	let actions = {};
 	const http = {
 		get: get.bind( null, url, credentials ),
 		post: post.bind( null, url, credentials )
@@ -96,9 +86,8 @@ function init( url, credentials ) {
 			if (metadata.code === "Unauthorized") {
 				throw new Error("Rancher environment authorization failed");
 			}
-			actions = metadata.links;
 			return {
-				listEnvironments: listEnvironments.bind( null, http, actions )
+				listEnvironments: listEnvironments.bind(null, http)
 			};
 		} );
 }
