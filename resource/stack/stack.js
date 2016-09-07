@@ -77,7 +77,7 @@ const upgradeStack = Promise.coroutine(function* ( rancherUrl, rancherUser, slac
 		return {status: 500, data: {message: "Unable to get enviorments from the rancher"}}; 
 	}
 	if ( enviorments.length === 0 ) { 
-		return {status: 500, data: {message: "No rancher enviorments found. Please check the cowpoke user permissions"}}; 
+		return {status: 403, data: {message: "No rancher enviorments found. Please check the cowpoke user permissions"}}; 
 	}
 
 	//loop through the stacks and upgrade those that match
