@@ -1,4 +1,3 @@
-const _ = require( "lodash" );
 const request = require( "request" );
 const urlLib = require( "url" );
 const Promise = require("bluebird");
@@ -71,7 +70,6 @@ function listStacks( http, stackUrl) {
 function listEnvironments(http) {
 	return http.get("/v1/projects").then(res => res.data.map(elm => {
 		elm.listStacks = listStacks.bind( null, http, elm.links.environments, elm.name );
-		elm.listContainers = http.get.bind( null, elm.links.containers );
 		return elm;
 	}));
 }
