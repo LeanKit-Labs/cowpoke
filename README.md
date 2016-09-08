@@ -16,14 +16,20 @@ Defaults shown below. Null values mean no default provided.
 	"host": {
 		"port": 8800
 	},
-	"nedb": {
-		"path": "./data"
-	},
+
 	"slack": {
-		"token": null
+		"token": null,
+		"channels": []
 	},
 	"api": {
 		"key": null
+	},
+	"rancher": {
+		"user": {
+			"key": null,
+			"secret": null
+		},
+		"url": null
 	}
 }
 ```
@@ -32,94 +38,24 @@ Defaults shown below. Null values mean no default provided.
 Defaults shown.
 
  * `HOST_PORT`=8800
- * `NEDB_PATH`="./data"
  * `SLACK_TOKEN`=""
+ * `RANCHER_USER_KEY`=""
+ * `RANCHER_USER_SECRET`=""
+ * `RANCHER_URL`=""
+ * `SLACK_CHANNELS`="[]"
  * 'API_KEY'=""
 
->If API_KEY is defined all requests to cowpoke will use this for authentication and reject any requests without a bearer header that matches the given value.
+If API_KEY is defined all requests to cowpoke will use this for authentication and reject any requests without a bearer header that matches the given value.
+If SLACK_TOKEN is defined, it will send slack messages with this token, and SLACK\_CHANNELS is a string representation of a JSON array of slack channel names to notify upon builds.
+The RANCHER_USER variables are for specifying the key and secret of the rancher account token it will use to authentication with the rancher. 
+RANCHER_URL is what stores the base URL representation for your rancher instance like: https://myrancher.example.io
+
 
 ## Concepts
 Cowpoke is designed to handle stack upgrade patterns for Rancher. Externalizing this allows the implementation behavior to evolve independently from Drone build files - something we feel is key given the number of services we have. It also allows us to externalize things like Rancher credentials as well as managing upgrades that may span multiple Rancher environments.
 
-### Managing environments
-In order for cowpoke to do anything, you have to tell it about your Rancher set up. This starts by defining environments by name and the API key and secret required to interact with them. Environments are defined with the following JSON structure:
-
-```json
-{
-	"name": "My Environment",
-	"baseUrl": "https://rancher.mydomain.com",
-	"key": "blahblahlblahblah",
-	"secret": "sssshhhhhh",
-	"slackChannels": []
-}
-```
-
-> Note: `slackChannels` is an optional array of strings specifying which channels should receiving notifications when a service in the environment is being upgraded. It is again strongly recommended that you should run cowpoke with a slack integration
-
 ## API
 API used [`hyped`](https://github.com/LeanKit-Labs/hyped). Optionally you can consume the API as `application/hal+json` via a lib like [`halon`](https://github.com/LeanKit-Labs/halon) or as `application/json` and skip out on all the hypermedia stuff.
-
-### List Environments
-
-#### `GET /api/environment`
-
-__Response__
-```json
-{
-	"environments": [
-		{
-			"name": "",
-			"baseUrl": "https://rancher.mydomain.com",
-			"key": "blahblahlblahblah",
-			"slackChannels": []
-		}
-	]
-}
-```
-
-### Get Environment
-
-#### `GET /api/environment/{name}`
-
-__Response__
-```json
-{
-	"name": "",
-	"baseUrl": "https://rancher.mydomain.com",
-	"key": "blahblahlblahblah",
-	"slackChannels": []
-}
-```
-
-### Update Environment
-
-#### `PATCH /api/environment/{name}`
-
-__Request__
-```json
-[
-	{
-		"op": "add",
-		"field": "slackChannels",
-		"value": "new-slack-channel-name"
-	},
-	{
-		"op": "remove",
-		"field": "slackChannels",
-		"value": "old-slack-channel-name"
-	}
-]
-```
-
-__Response__
-```json
-{
-	"name": "",
-	"baseUrl": "https://rancher.mydomain.com",
-	"key": "blahblahlblahblah",
-	"slackChannels": []
-}
-```
 
 ### Upgrade
 
