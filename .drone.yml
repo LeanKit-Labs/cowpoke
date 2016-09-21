@@ -7,6 +7,7 @@ build:
    - npm install
    - npm test
    - npm prune --production
+   - echo "hello"
 
 cache:
   mount:
