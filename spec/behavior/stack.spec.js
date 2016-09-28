@@ -57,6 +57,7 @@ const slackMockDoNothing = {
 };
 
 
+
 describe("upgradeStack", () => {
 
 	const githubOwner = "lukeSkywalker";
@@ -92,6 +93,35 @@ describe("upgradeStack", () => {
 
 	it("should upgrade the stack", () => {
 		return stackResource.upgradeStack("url", {key: "", secret: ""}, slackMockDoNothing, {
+			data: {
+				catalog: githubOwner + "/" + githubRepo,
+				rancherCatalogName: "rebelfleet", // eslint-disable-line
+				branch,
+				githubToken: "abc", // eslint-disable-line
+				catalogVersion: version // eslint-disable-line
+			}
+		}).then(res => res.should.partiallyEql({
+			upgraded_stacks_by_environment: [{ // eslint-disable-line
+				environment: "Test",
+				upgraded: [{
+					name: stack.name,
+					id: stackId
+				}]
+			}]
+		}));
+	});
+
+
+	it("should call slack", function(done) {
+		let amDone = false;
+		return stackResource.upgradeStack("url", {key: "", secret: ""}, {
+			send: () => {
+				if (!amDone) {
+					amDone = true;
+					done();
+				}
+			}
+		}, {
 			data: {
 				catalog: githubOwner + "/" + githubRepo,
 				rancherCatalogName: "rebelfleet", // eslint-disable-line

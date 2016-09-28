@@ -5,7 +5,7 @@
 
 	"slack": {
 		"token": null,
-		"channels": []
+		"channels": null
 	},
 	"api": {
 		"key": null

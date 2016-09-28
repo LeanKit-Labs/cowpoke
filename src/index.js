@@ -4,6 +4,7 @@ const config = require("configya")({
 	file: "./config.json"
 });
 const fount = require("fount");
+const toArray = require("./strToArray");
 
 let vaild = true;
 
@@ -24,14 +25,16 @@ if (!config.rancher.url) {
 	console.error("RANCHER_URL not set");
 }
 
-if (config.slack.channels.length === 0) {
+let channels = toArray(config.slack.channels, ",");
+
+if (channels.length === 0) {
 	console.warn("No Slack channels specified no message will be sent");
 }
 
 if (vaild) {
 	fount.register("rancherUrl", config.rancher.url);
 	fount.register("user", config.rancher.user);
-	const slack = require("./slack")(config.slack.token, config.slack.channels);
+	const slack = require("./slack")(config.slack.token, channels, console.warn);
 	fount.register("slack", slack);
 
 	const host = hyped.createHost(autohost, {
