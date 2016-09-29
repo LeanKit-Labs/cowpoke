@@ -47,6 +47,7 @@ const getTemplate = Promise.coroutine(function* ( token, catalogOwner, catalog, 
 	
 });
 
+
 const upgradeStack = Promise.coroutine(function* ( rancherUrl, rancherUser, slack, envelope ) {
 
 	//read args
@@ -69,39 +70,33 @@ const upgradeStack = Promise.coroutine(function* ( rancherUrl, rancherUser, slac
 	}
 	
 	//get the environments
-	const enviorments = yield rancherFn(rancherUrl, rancherUser).then(elm => elm.listEnvironments()).catch(() => undefined);
-	if ( enviorments === undefined ) { 
-		return {status: 500, data: {message: "Unable to get enviorments from the rancher"}}; 
-	}
-	if ( enviorments === undefined ) { 
-		return {status: 500, data: {message: "Unable to get enviorments from the rancher"}}; 
-	}
-	if ( enviorments.length === 0 ) { 
-		return {status: 403, data: {message: "No rancher enviorments found. Please check the cowpoke user permissions"}}; 
+	const environments = yield rancherFn(rancherUrl, rancherUser).then(elm => elm.listEnvironments()).catch(() => undefined);
+	if ( !environments ) { 
+		return {status: 403, data: {message: "No rancher environments found. Please check the cowpoke user permissions"}}; 
 	}
 
 	//loop through the stacks and upgrade those that match
 	const upgraded = [];
-	for (let i = 0; i < enviorments.length; i++) {
+	for (let i = 0; i < environments.length; i++) {
 		const upgradedStacks = [];
-		const stacks = yield enviorments[i].listStacks();
+		const stacks = yield environments[i].listStacks();
 		for ( let j = 0; j < stacks.length; j++ ) {
 			if (shouldUpgradeStack( stacks[j], rancherCatalogName, branch, catalogNum )) {
 				upgradedStacks.push( {
 					name: stacks[j].name,
 					id: stacks[j].id 
 				});
-				slack.send(format("Starting upgrade of stack %s in %s.", stacks[j].name, enviorments[i].name));
+				slack.send(`Starting upgrade of stack ${stacks[j].name} in ${environments[i].name}`);
 				stacks[j].upgrade(template).then( 
-					() => slack.send(format("Finished upgrade of stack %s in %s.", stacks[j].name, enviorments[i].name))
+					() => slack.send(`Finished upgrade of stack ${stacks[j].name} in ${environments[i].name}`)
 				).catch( 
-					() => slack.send(format("There was an error during upgrade of stack %s in %s.", stacks[j].name, enviorments[i].name))
+					() => slack.send(`There was an error during upgrade of stack ${stacks[j].name} in ${environments[i].name}`)
 				);
 			}
 		}
 		if (upgradedStacks.length !== 0) {
 			upgraded.push( {
-				environment: enviorments[i].name,
+				environment: environments[i].name,
 				upgraded: upgradedStacks
 			});
 		}

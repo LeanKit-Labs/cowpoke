@@ -11,7 +11,6 @@ chai.use( require( "sinon-chai" ) );
 require( "sinon-as-promised" );
 
 /* global _, bluebird  */
-global.nock = require( "nock" );
 
 function deepCompare( a, b, k ) {
 	var diffs = [];

@@ -19,7 +19,7 @@ Defaults shown below. Null values mean no default provided.
 
 	"slack": {
 		"token": null,
-		"channels": []
+		"channels": null
 	},
 	"api": {
 		"key": null
@@ -42,12 +42,12 @@ Defaults shown.
  * `RANCHER_USER_KEY`=""
  * `RANCHER_USER_SECRET`=""
  * `RANCHER_URL`=""
- * `SLACK_CHANNELS`="[]"
+ * `SLACK_CHANNELS`=""
  * 'API_KEY'=""
 
 If API_KEY is defined all requests to cowpoke will use this for authentication and reject any requests without a bearer header that matches the given value.
-If SLACK_TOKEN is defined, it will send slack messages with this token, and SLACK\_CHANNELS is a string representation of a JSON array of slack channel names to notify upon builds.
-The RANCHER_USER variables are for specifying the key and secret of the rancher account token it will use to authentication with the rancher. 
+If SLACK_TOKEN is defined, it will send slack messages with this token, and SLACK\_CHANNELS is a comma delimited string of slack channel names to notify upon builds.
+The RANCHER_USER variables are for specifying the key and secret of the rancher account token it will use to authentication with the rancher.
 RANCHER_URL is what stores the base URL representation for your rancher instance like: https://myrancher.example.io
 
 
