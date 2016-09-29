@@ -14,7 +14,7 @@ function send( rtm, channels, logger, message ) {
 			} );
 		} catch (e) {
 			if (logger) {
-				logger(`Error sending message "${message} to channel ${channels[i]}: ${e}"`)
+				logger(`Error sending message "${message} to channel ${channels[i]}: ${e}"`);
 			}
 		}
 	}

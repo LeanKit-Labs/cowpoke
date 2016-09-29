@@ -36,10 +36,10 @@
     "fount": "^0.1.0",
     "request": "^2.67.0",
     "request-promise": "^3.0.0",
-    "urlencode": "^1.1.0"
+    "urlencode": "^1.1.0",
+    "lodash": "^3.10.1"
   },
   "devDependencies": {
-    "lodash": "^3.10.1",
     "proxyquire": "^1.7.4",
     "babel": "^6.5.2",
     "babel-cli": "^6.9.0",

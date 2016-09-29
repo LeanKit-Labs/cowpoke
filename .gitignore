@@ -6,3 +6,4 @@
 /coverage
 .droneTags.yml
 .buildInfo.yml
+npm-debug.log
