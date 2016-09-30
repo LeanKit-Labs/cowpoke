@@ -1,7 +1,7 @@
 {
   "name": "cowpoke",
   "version": "0.6.0",
-  "description": "A service to handle configurable Rancher service upgrade patterns",
+  "description": "A service to handle Rancher upgrade patterns",
   "engines": {
     "node": " >=6.0.0"
   },
@@ -15,19 +15,19 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/arobson/cowpoke.git"
+    "url": "git://github.com/LeanKit-Labs/cowpoke.git"
   },
   "keywords": [
     "rancher",
     "upgrade",
     "automation"
   ],
-  "author": "Alex Robson",
+  "author": "LeanKit Tools and Automation",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/arobson/cowpoke/issues"
+    "url": "https://github.com/LeanKit-Labs/cowpoke/issues"
   },
-  "homepage": "https://github.com/arobson/cowpoke#readme",
+  "homepage": "https://github.com/LeanKit-Labs/cowpoke#readme",
   "dependencies": {
     "@slack/client": "^3.3.0",
     "autohost": "^0.6.0",

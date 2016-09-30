@@ -1,5 +1,5 @@
 FROM mhart/alpine-node:6
-MAINTAINER Alex Robson <asrobson@gmail.com>
+MAINTAINER LeanKit Tools & Automation <pd-atat@leankit.com>
 
 RUN apk add --update bash
 
