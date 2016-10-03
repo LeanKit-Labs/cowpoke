@@ -71,7 +71,7 @@ const upgradeStack = Promise.coroutine(function* ( rancherUrl, rancherUser, slac
 	
 	//get the environments
 	const environments = yield rancherFn(rancherUrl, rancherUser).then(elm => elm.listEnvironments()).catch(() => undefined);
-	if ( !environments ) { 
+	if ( environments.length === 0 ) { 
 		return {status: 403, data: {message: "No rancher environments found. Please check the cowpoke user permissions"}}; 
 	}
 
