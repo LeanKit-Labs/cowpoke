@@ -1,6 +1,6 @@
 {
   "name": "cowpoke",
-  "version": "0.6.0",
+  "version": "1.7.0",
   "description": "A service to handle Rancher upgrade patterns",
   "engines": {
     "node": " >=6.0.0"
