@@ -127,14 +127,14 @@ describe("Rancher API", () => {
 		});
 
 		it("should retrieve environments", () => {
-			return environments.Test.should.partiallyEql(_.omit(environmentsBody[0], ["links"]));
+			return environments[0].should.partiallyEql(_.omit(environmentsBody[0], ["links"]));
 		});
 	});
 
 	let stacks;
 	describe("When retrieving a list of stacks in an environment", () => {
 		before(() => {
-			return environments.Test.listStacks().then(res => {
+			return environments[0].listStacks().then(res => {
 				stacks = res;
 			});
 		});

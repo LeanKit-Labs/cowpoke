@@ -1,15 +1,7 @@
-const _ = require( "lodash" );
 const Promise = require("bluebird");
 const rancherFn = require( "../../src/rancher" );
 const format = require( "util" ).format;
-const environment = require( "../../src/data/nedb/environment" );
 const rp = require( "request-promise" );
-
-function sendMessage(slack, channels, message) {
-	channels.forEach( channel => {
-		slack.send( channel, message );
-	}, this);
-}
 
 function shouldUpgradeStack ( stack, catalog, branch, version ) {
 	if (stack.externalId) {
@@ -55,7 +47,8 @@ const getTemplate = Promise.coroutine(function* ( token, catalogOwner, catalog, 
 	
 });
 
-const upgradeStack = Promise.coroutine(function* ( slack, envelope ) {
+
+const upgradeStack = Promise.coroutine(function* ( rancherUrl, rancherUser, slack, envelope ) {
 
 	//read args
 	const githubInfo = envelope.data.catalog ? envelope.data.catalog.split("/") : [];
@@ -77,54 +70,33 @@ const upgradeStack = Promise.coroutine(function* ( slack, envelope ) {
 	}
 	
 	//get the environments
-	const storedEnvironments = yield environment.getAll().catch( () => undefined );
-	if ( storedEnvironments === undefined ) { 
-		return {status: 500, data: {message: "Unable to get enviorments from the database"}}; 
-	}
-
-	
-	//get the rancher data
-	const envRequests = [];
-	for ( let i = 0; i < storedEnvironments.length; i++ ) {
-		envRequests.push( rancherFn( storedEnvironments[i].baseUrl, {
-			key: storedEnvironments[i].key,
-			secret: storedEnvironments[i].secret
-		} ).catch(() => console.error("Authorization failed for ", storedEnvironments[i].name)).then(Promise.coroutine(function*(rancher) {
-			if (rancher === undefined) {
-				throw new Error("Authorization failed for " + storedEnvironments[i].name);
-			}
-			const environments = yield rancher.listEnvironments();
-			return environments[_.keys( environments )[0]];
-		})));
+	const environments = yield rancherFn(rancherUrl, rancherUser).then(elm => elm.listEnvironments()).catch(() => undefined);
+	if ( environments.length === 0 ) { 
+		return {status: 403, data: {message: "No rancher environments found. Please check the cowpoke user permissions"}}; 
 	}
 
 	//loop through the stacks and upgrade those that match
-	const rancherEnvironments = yield Promise.all( envRequests ).catch(err => ({status: 500, message: err.message}));
-	if (rancherEnvironments.constructor !== Array) {
-		return rancherEnvironments;
-	}
 	const upgraded = [];
-	for (let i = 0; i < rancherEnvironments.length; i++) {
+	for (let i = 0; i < environments.length; i++) {
 		const upgradedStacks = [];
-		const channels = yield environment.getChannels();
-		const stacks = yield rancherEnvironments[i].listStacks();
+		const stacks = yield environments[i].listStacks();
 		for ( let j = 0; j < stacks.length; j++ ) {
 			if (shouldUpgradeStack( stacks[j], rancherCatalogName, branch, catalogNum )) {
 				upgradedStacks.push( {
 					name: stacks[j].name,
 					id: stacks[j].id 
 				});
-				sendMessage(slack, channels, format("Starting upgrade of stack %s in %s.", stacks[j].name, rancherEnvironments[i].name));
+				slack.send(`Starting upgrade of stack ${stacks[j].name} in ${environments[i].name}`);
 				stacks[j].upgrade(template).then( 
-					() => sendMessage(slack, channels, format("Finished upgrade of stack %s in %s.", stacks[j].name, rancherEnvironments[i].name))
+					() => slack.send(`Finished upgrade of stack ${stacks[j].name} in ${environments[i].name}`)
 				).catch( 
-					() => sendMessage(slack, channels, format("There was an error during upgrade of stack %s in %s.", stacks[j].name, rancherEnvironments[i].name))
+					() => slack.send(`There was an error during upgrade of stack ${stacks[j].name} in ${environments[i].name}`)
 				);
 			}
 		}
 		if (upgradedStacks.length !== 0) {
 			upgraded.push( {
-				environment: rancherEnvironments[i].name,
+				environment: environments[i].name,
 				upgraded: upgradedStacks
 			});
 		}

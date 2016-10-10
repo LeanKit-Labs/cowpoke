@@ -4,7 +4,7 @@ const key = require( "configya" )( {
 } ).api.key;
 const checkAuth = require("../checkauth").bind(null, key);
 
-module.exports = function( host, environment, slack ) {
+module.exports = function( host, rancherUrl, user, slack ) {
 	return {
 		name: "stack",
 		middleware: [checkAuth],
@@ -12,7 +12,7 @@ module.exports = function( host, environment, slack ) {
 			upgrade: {
 				url: "/",
 				method: "PATCH",
-				handle: stack.upgradeStack.bind( null, slack )
+				handle: stack.upgradeStack.bind( null, rancherUrl, user, slack )
 			}
 		}
 	};
