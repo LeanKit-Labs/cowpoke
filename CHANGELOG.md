@@ -5,6 +5,8 @@
 This is a major release that affects both Rancher environments as well as
 authorizing deployments of stacks to accross environments.
 
+The majority of the work in this release was implemented in #75
+
 * environment meta-data (access keys, slack channels, etc) are no longer stored in an internal database
 * environment API endpoints were removed
 * environment authorization is now handled by Rancher account tokens instead of environment specific tokens
