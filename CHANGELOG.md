@@ -1,5 +1,9 @@
 ## 2.x
 
+### 2.1.1
+
+* removing 'v' from tag in master builds
+
 ### 2.1.0
 
 * adding travis configuration
