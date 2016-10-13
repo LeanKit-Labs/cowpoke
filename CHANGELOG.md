@@ -1,5 +1,9 @@
 ## 2.x
 
+### 2.1.7
+
+* updating master build tags
+
 ### 2.1.4
 
 * more changes for travis tag builds
