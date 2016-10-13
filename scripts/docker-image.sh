@@ -32,7 +32,7 @@ fi
 #construct a tag for local or non release travis builds
 #useful for pushing images manually (testing, etc)
 if [ "$GIT_BRANCH" = "master" ]; then
-    DOCKER_TAG="${APP_VERSION}"
+    DOCKER_TAG="v${APP_VERSION}"
 else
     DOCKER_TAG="${GIT_BRANCH}_${APP_VERSION}"
     if [ -n "$BUILD_NUMBER" ]; then
