@@ -22,7 +22,6 @@ fi
 
 GIT_SHORT_COMMIT="$(git rev-parse --short HEAD)"
 
-
 #create release tag or testing tag based off the current branch
 if [ "$GIT_BRANCH" = "master" ]; then
     DOCKER_TAG="${APP_VERSION}"
