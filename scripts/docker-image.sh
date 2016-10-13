@@ -7,6 +7,7 @@ DOCKER_TAG=
 BUILD_NUMBER=
 DOCKER_REPO="leankit/cowpoke"
 GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+APP_VERSION=$(node -e "console.log(require('./package.json').version);")
 
 #override build and branch info from TRAVIS CI if applicable
 if [ "$TRAVIS" = "true" ]; then
@@ -20,7 +21,7 @@ if [ "$TRAVIS" = "true" ]; then
 fi
 
 GIT_SHORT_COMMIT="$(git rev-parse --short HEAD)"
-APP_VERSION=$(node -e "console.log(require('./package.json').version);")
+
 
 #create release tag or testing tag based off the current branch
 if [ "$GIT_BRANCH" = "master" ]; then

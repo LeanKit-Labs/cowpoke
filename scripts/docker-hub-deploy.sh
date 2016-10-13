@@ -2,7 +2,12 @@
 # builds an tagged image and pushes it to docker hub
 set -e
 
-if [ "$TRAVIS" = "true" ] && [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_BRANCH" != "master" ]; then
+VERSION=$(node -e "console.log(require('./package.json').version);")
+#a docker container should only be pushed if travis is not building a pull request,
+#the branch is master, it has been tagged, and the tag matches the semver.
+#the avoids an issue where code is merged into master without an updated semver,
+#which would cause the image of the previous version to be overwritten with new code
+if [ "$TRAVIS" = "false" ] || [ "$TRAVIS_PULL_REQUEST" != "false" ] || [ "$TRAVIS_BRANCH" != "master" ] || [ "$TRAVIS_TAG" != "$VERSION" ]; then
     echo "skipping deployment"
     exit 0
 fi
