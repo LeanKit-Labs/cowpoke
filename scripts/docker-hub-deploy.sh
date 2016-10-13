@@ -3,9 +3,9 @@
 set -e
 
 VERSION=$(node -e "console.log(require('./package.json').version);")
-echo $VERSION
-echo $TRAVIS_TAG
-echo $TRAVIS_BRANCH
+echo "app version: ${VERSION}"
+echo "travis tag: ${TRAVIS_TAG}"
+echo "travis branch: ${TRAVIS_BRANCH}"
 
 #an image should only be push to docker hub under the following conditions:
 # 1) the code is being built under Travis

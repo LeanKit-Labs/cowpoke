@@ -8,6 +8,7 @@ BUILD_NUMBER=
 DOCKER_REPO="leankit/cowpoke"
 GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
 APP_VERSION=$(node -e "console.log(require('./package.json').version);")
+GIT_SHORT_COMMIT="$(git rev-parse --short HEAD)"
 
 #override build and branch info from TRAVIS CI if applicable
 if [ "$TRAVIS" = "true" ]; then
@@ -16,13 +17,20 @@ if [ "$TRAVIS" = "true" ]; then
         exit 0
     fi
 
+    #Special Case:
+    # if Travis is building a release tag, just use the tag and exit early
+    if [ "$TRAVIS_BRANCH" = "v{APP_VERSION}" ] && [ "$TRAVIS_TAG" = "v{APP_VERSION}" ]; then
+        $DOCKER_IMAGE="${DOCKER_REPO:$TRAVIS_TAG}"
+        echo $DOCKER_IMAGE
+        exit 0
+    fi
+
     GIT_BRANCH="$TRAVIS_BRANCH"
     BUILD_NUMBER="$TRAVIS_BUILD_NUMBER"
 fi
 
-GIT_SHORT_COMMIT="$(git rev-parse --short HEAD)"
-
-#create release tag or testing tag based off the current branch
+#construct a tag for local or non release travis builds
+#useful for pushing images manually (testing, etc)
 if [ "$GIT_BRANCH" = "master" ]; then
     DOCKER_TAG="${APP_VERSION}"
 else
