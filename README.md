@@ -1,5 +1,7 @@
 ## cowpoke
 
+[![Build Status](https://travis-ci.org/LeanKit-Labs/cowpoke.svg?branch=master)](https://travis-ci.org/LeanKit-Labs/cowpoke)
+
 A service to handle configurable rancher stack upgrade patterns. Each service you wish to upgrade must have its own catalog with each code branch having its own entry in said catalog. The branch names and the catalog entry names must match. When an upgrade request is sent to cowpoke it will scan all of the environments in rancher it has credentials for and upgrade any stack created from and older version of the same catalog entry: which should be an older version of the same code.
 
 
