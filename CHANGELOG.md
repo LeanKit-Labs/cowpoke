@@ -1,5 +1,9 @@
 ## 2.x
 
+### 2.1.0
+
+* adding travis configuration
+
 ### 2.0.0
 
 This is a major release that affects both Rancher environments as well as
