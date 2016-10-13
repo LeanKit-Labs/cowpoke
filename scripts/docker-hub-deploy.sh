@@ -3,11 +3,15 @@
 set -e
 
 VERSION=$(node -e "console.log(require('./package.json').version);")
-#a docker container should only be pushed if travis is not building a pull request,
-#the branch is master, it has been tagged, and the tag matches the semver.
-#the avoids an issue where code is merged into master without an updated semver,
-#which would cause the image of the previous version to be overwritten with new code
-if [ "$TRAVIS" = "false" ] || [ "$TRAVIS_PULL_REQUEST" != "false" ] || [ "$TRAVIS_BRANCH" != "master" ] || [ "$TRAVIS_TAG" != "$VERSION" ]; then
+echo $VERSION
+#an image should only be push to docker hub under the following conditions:
+# 1) the code is being built under Travis
+# 2) a PR isn't being built
+# 3) the code is being built as a tag and it matches the version of the project
+#
+# #3 is achieved by using the tag-release utility
+# this prevents situations where an accidental merge can overwrite existing docker images with new code
+if [ "$TRAVIS" = "false" ] || [ "$TRAVIS_PULL_REQUEST" != "false" ] || [ "$TRAVIS_TAG" != "v${VERSION}" ]; then
     echo "skipping deployment"
     exit 0
 fi
