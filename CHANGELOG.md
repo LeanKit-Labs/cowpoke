@@ -1,5 +1,9 @@
 ## 2.x
 
+### 2.1.2
+
+* fixing tag logic in travis scripts
+
 ### 2.1.1
 
 * removing 'v' from tag in master builds
