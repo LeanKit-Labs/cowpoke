@@ -20,7 +20,7 @@ if [ "$TRAVIS" = "true" ]; then
     #Special Case:
     # if Travis is building a release tag, just use the tag and exit early
     if [ "$TRAVIS_BRANCH" = "v${APP_VERSION}" ] && [ "$TRAVIS_TAG" = "v${APP_VERSION}" ]; then
-        $DOCKER_IMAGE="${DOCKER_REPO}:${TRAVIS_TAG}"
+        DOCKER_IMAGE="${DOCKER_REPO}:${TRAVIS_TAG}"
         echo $DOCKER_IMAGE
         exit 0
     fi
