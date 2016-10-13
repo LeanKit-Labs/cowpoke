@@ -1,5 +1,9 @@
 ## 2.x
 
+### 2.1.4
+
+* more changes for travis tag builds
+
 ### 2.1.3
 
 * debug logging for travis tag build diagnostics
