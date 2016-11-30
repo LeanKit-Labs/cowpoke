@@ -21,7 +21,7 @@ function send( rtm, channels, logger, message ) {
 }
 
 module.exports = function( token, channels, logger ) {
-	if ( !token ) {
+	if ( !( token && channels && channels.length ) ) {
 		console.warn( "Slack is not configured. No Messages will be sent" );
 		return {
 			send() {}

@@ -43,7 +43,6 @@ const getTemplate = Promise.coroutine( function *( token, catalogOwner, catalog,
 	return templateResult;
 } );
 
-
 const upgradeStack = Promise.coroutine( function *( rancherUrl, rancherUser, slack, envelope ) {
 	const githubInfo = envelope.data.catalog ? envelope.data.catalog.split( "/" ) : [];
 	const githubOwner = githubInfo[ 0 ];

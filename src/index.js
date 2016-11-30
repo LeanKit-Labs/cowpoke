@@ -1,49 +1,30 @@
+const config = require( "./config.js" );
 const hyped = require( "hyped" )( {} );
 const autohost = require( "autohost" );
-const config = require( "configya" )( {
-	file: "./config.json"
-} );
 const fount = require( "fount" );
-const toArray = require( "./strToArray" );
 const slack = require( "./slack" );
 
-let vaild = true;
+const errors = config.validateEnvVars();
 
-if ( !config.api.key ) {
-	console.warn( "API_KEY not set. No authentication will be used" );
-}
-if ( !config.rancher.user.key ) {
-	vaild = false;
-	console.error( "RANCHER_USER_KEY not set" );
-}
-if ( !config.rancher.user.secret ) {
-	vaild = false;
-	console.error( "RANCHER_USER_SECRET not set" );
+if ( errors.length ) {
+	errors.forEach( x => console.error( x ) );
+	process.exit( 1 );
 }
 
-if ( !config.rancher.url ) {
-	vaild = false;
-	console.error( "RANCHER_URL not set" );
-}
+fount.register( "rancherUrl", process.env.RANCHER_URL );
+fount.register( "apiKey", process.env.API_KEY );
+fount.register( "user", process.env.RANCHER_USER_KEY );
 
-const channels = toArray( config.slack.channels, "," );
+const slackClient = slack( process.env.SLACK_TOKEN, config.getSlackChannels(), console.warn );
+fount.register( "slack", slackClient );
 
-if ( channels.length === 0 ) {
-	console.warn( "No Slack channels specified no message will be sent" );
-}
+const host = hyped.createHost( autohost, {
+	port: process.env.HOST_PORT,
+	fount,
+	noSession: true,
+	session: null,
+	handleRouteErrors: true
+} );
 
-if ( vaild ) {
-	fount.register( "rancherUrl", config.rancher.url );
-	fount.register( "user", config.rancher.user );
-	const slackClient = slack( config.slack.token, channels, console.warn );
-	fount.register( "slack", slackClient );
+host.start();
 
-	const host = hyped.createHost( autohost, {
-		port: config.host.port,
-		fount,
-		noSession: true,
-		session: null,
-		handleRouteErrors: true
-	} );
-	host.start();
-}
