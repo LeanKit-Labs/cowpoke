@@ -2,12 +2,12 @@ const stack = require( "./stack" );
 const key = require( "configya" )( {
 	file: "./config.json"
 } ).api.key;
-const checkAuth = require("../checkauth").bind(null, key);
+const checkAuth = require( "../checkauth" ).bind( null, key );
 
 module.exports = function( host, rancherUrl, user, slack ) {
 	return {
 		name: "stack",
-		middleware: [checkAuth],
+		middleware: [ checkAuth ],
 		actions: {
 			upgrade: {
 				url: "/",

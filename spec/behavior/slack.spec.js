@@ -1,9 +1,8 @@
-const proxyquire = require("proxyquire").noCallThru();
+const proxyquire = require( "proxyquire" ).noCallThru();
 
-
-describe("sending messsages",  () => {
-	it("should not error", function (done) {
-		proxyquire("../../src/slack.js", {
+describe( "sending messsages", () => {
+	it( "should not error", function( done ) {
+		proxyquire( "../../src/slack.js", {
 			"@slack/client": {
 				RtmClient: class RtmClient {
 					on() {}
@@ -16,14 +15,14 @@ describe("sending messsages",  () => {
 				CLIENT_EVENTS: {
 					RTM: {}
 				},
-				MemoryDataStore: class MemoryDataStore{}
+				MemoryDataStore: class MemoryDataStore {}
 			}
-		})("abc", ["channel"]).send();
+		} )( "abc", [ "channel" ] ).send();
 		done();
-	});
-	it("should send message", function (done) {
+	} );
+	it( "should send message", function( done ) {
 		const msg = "test";
-		proxyquire("../../src/slack.js", {
+		proxyquire( "../../src/slack.js", {
 			"@slack/client": {
 				RtmClient: class RtmClient {
 					constructor() {
@@ -34,8 +33,8 @@ describe("sending messsages",  () => {
 					}
 					on() {}
 					start() {}
-					sendMessage(arg) {
-						if (arg === msg) {
+					sendMessage( arg ) {
+						if ( arg === msg ) {
 							done();
 						}
 					}
@@ -43,8 +42,8 @@ describe("sending messsages",  () => {
 				CLIENT_EVENTS: {
 					RTM: {}
 				},
-				MemoryDataStore: class MemoryDataStore{}
+				MemoryDataStore: class MemoryDataStore {}
 			}
-		})("abc", ["channel"]).send(msg);
-	});
-});
+		} )( "abc", [ "channel" ] ).send( msg );
+	} );
+} );
