@@ -1,0 +1,6 @@
+{
+  "extends": ["leankit/test"],
+  "rules": {
+    "no-invalid-this": 0
+  }
+}
