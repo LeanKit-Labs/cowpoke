@@ -9,8 +9,8 @@
   "scripts": {
     "lint": "eslint .",
     "mocha": "mocha spec/**",
-    "coverage": "babel-node node_modules/isparta/bin/isparta cover --report text --report html node_modules/mocha/bin/_mocha --compilers js:babel-register -- spec/** --reporter dot",
-    "test": "npm run mocha && npm run coverage",
+    "coverage": "NODE_ENV=coverage babel-node node_modules/isparta/bin/isparta cover --report text --report html node_modules/mocha/bin/_mocha --compilers js:babel-register -- spec/** --reporter dot",
+    "test": "NODE_ENV=mocha npm run mocha && npm run coverage",
     "run": "node src/index.js"
   },
   "repository": {
