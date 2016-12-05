@@ -75,7 +75,7 @@ SLACK_CHANNELS="channel1,channel2,channel3"
 
 ### Docker
 
-There is a Dockerfile included as well that can be built and run.
+There is a Dockerfile included as well that can be built and run
 
 - ```docker pull leankit/cowpoke```
 - ```docker run --name cowpoke --env-file "path to .env file" -d leankit/cowpoke```
