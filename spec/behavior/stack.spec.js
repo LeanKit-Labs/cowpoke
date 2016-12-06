@@ -157,7 +157,7 @@ describe( "upgradeStack", () => {
 	it( "should not find the proper arguments", () => {
 		return stackResource.upgradeStack( "url", { key: "", secret: "" }, slackMockDoNothing, { data: {} } )
 			.then( res =>
-				res.should.partiallyEql( { status: 401, data: { message: "Invaild arguments" } } )
+				res.should.partiallyEql( { status: 400, data: { message: "Invaild arguments" } } )
 			);
 	} );
 } );
