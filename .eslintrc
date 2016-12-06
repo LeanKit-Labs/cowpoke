@@ -10,6 +10,8 @@
 		"init-declarations": 0,
         "no-magic-numbers": 0,
         "max-statements": 0,
-        "no-console": 0
+        "no-console": 0,
+        "global-require": 0,
+        "no-process-exit": 0
     }
 }

@@ -8,6 +8,7 @@ global.bluebird = require( "bluebird" );
 global.fs = require( "fs" );
 global.sinon = require( "sinon" );
 chai.use( require( "sinon-chai" ) );
+chai.use( require( "chai-things" ) );
 require( "sinon-as-promised" );
 
 /* global _, bluebird  */
