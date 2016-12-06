@@ -1,3 +1,9 @@
+## 3.x
+
+### 3.0.0
+
+* /upgrade returns an HTTP 400 if PATCH data is invalid
+
 ## 2.x
 
 ### 2.1.7
