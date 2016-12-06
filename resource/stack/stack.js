@@ -54,7 +54,7 @@ const upgradeStack = Promise.coroutine( function *( rancherUrl, rancherUser, sla
 	const githubToken = envelope.data.githubToken;
 
 	if ( !githubToken || !githubInfo || !githubOwner || !githubRepo || !branch || !catalogNum || !rancherCatalogName || isNaN( catalogNum ) ) {
-		return { status: 401, data: { message: "Invaild arguments" } };
+		return { status: 400, data: { message: "Invaild arguments" } };
 	}
 
 	const template = yield getTemplate( githubToken, githubOwner, githubRepo, branch, catalogNum ).catch( () => undefined );
